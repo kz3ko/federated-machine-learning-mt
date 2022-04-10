@@ -1,7 +1,4 @@
-from abc import ABC
-from dataclasses import dataclass
-from enum import Enum
-from typing import Optional, Union, Generator
+from typing import Optional
 
 import tensorflow_datasets as tfds
 from matplotlib import pyplot as plt
@@ -10,126 +7,13 @@ from tensorflow.python.data.ops.dataset_ops import PrefetchDataset
 from tensorflow.python.framework.ops import EagerTensor
 from tensorflow_datasets.core.dataset_info import DatasetInfo
 
-
-@dataclass(unsafe_hash=True)
-class SampleClass:
-    id: int
-    name: str
-
-
-@dataclass(unsafe_hash=True)
-class Sample:
-    value: EagerTensor
-    class_: SampleClass
-
-
-class TruncatePoint(Enum):
-    FIRST = 'first'
-    LAST = 'last'
-
-
-class RawDatasetClasses:
-
-    def __init__(self, dataset_info: DatasetInfo):
-        self.classes = self.__get_dataset_classes(dataset_info)
-
-    def __repr__(self) -> str:
-        return str(self.classes)
-
-    def __len__(self) -> int:
-        return len(self.classes)
-
-    def __iter__(self) -> Generator[SampleClass, None, None]:
-        for class_ in self.classes:
-            yield class_
-
-    def __getitem__(self, key: Union[int, str, slice]) -> SampleClass:
-        if isinstance(key, int):
-            [output] = filter(lambda cls: cls.id == key, self.classes)
-        elif isinstance(key, str):
-            [output] = filter(lambda cls: cls.name == key, self.classes)
-        elif isinstance(key, slice):
-            start = key.start if key.start else 0
-            stop = key.stop
-            step = key.step if key.step else 1
-            output = self.classes[start: stop: step]
-        else:
-            raise TypeError(f'{self.__class__.__name__} indices must be "int", "str" or "slice", not {type(key)}.')
-
-        return output
-
-    @staticmethod
-    def __get_dataset_classes(dataset_info: DatasetInfo) -> list[SampleClass]:
-        return [SampleClass(dataset_info.features['label'].str2int(name), name) for name in
-                dataset_info.features['label'].names]
-
-
-class CustomDataset(ABC):
-
-    def __init__(self, samples: list[EagerTensor]):
-        self.samples = samples
-        self.data = self.__get_data_from_samples(self.samples)
-
-    def __getitem__(self, key: int) -> EagerTensor:
-        if isinstance(key, int):
-            [output] = [sample for sample in self.data.skip(key).take(1)]
-        elif isinstance(key, slice):
-            start = key.start if key.start else 0
-            stop = key.stop
-            output = [sample for sample in self.data.skip(start).take(stop - start)]
-        else:
-            raise TypeError(f'{self.__class__.__name__} indices must be "int" or "slice", not {type(key)}.')
-
-        return output
-
-    def __iter__(self) -> Generator[EagerTensor, None, None]:
-        for sample in self.data:
-            yield sample
-
-    def __copy__(self):
-        cls = self.__class__
-        copied_dataset = cls.__new__(cls)
-        copied_dataset.__dict__.update(self.__dict__)
-        return copied_dataset
-
-    def truncate(self, number: int, where: TruncatePoint = TruncatePoint.FIRST):
-        if where == TruncatePoint.FIRST:
-            self.samples = self.samples[number:]
-        elif where == TruncatePoint.LAST:
-            self.samples = self.samples[:-number]
-        else:
-            raise TypeError('You can only truncate first or last samples from dataset!')
-
-        self.data = self.__get_data_from_samples(self.samples)
-
-    def __len__(self) -> int:
-        return len(self.samples)
-
-    @staticmethod
-    def __get_data_from_samples(samples: list[EagerTensor]) -> Dataset:
-        return Dataset.from_tensor_slices(samples)
-
-
-class ClassDataset(CustomDataset):
-
-    def __init__(self, class_: SampleClass, samples: list[EagerTensor]):
-        super(ClassDataset, self).__init__(samples)
-        self.class_ = class_
-
-
-class ClientDataset(CustomDataset):
-
-    def __init__(self, samples: list[EagerTensor]):
-        super(ClientDataset, self).__init__(samples)
+from models import SampleClass, Sample
+from dataset import RawDatasetClasses, ClassDataset, ClientDataset
+from client import Client
 
 
 def load_dataset(name: str, *args, **kwargs) -> tuple[PrefetchDataset, Optional[DatasetInfo]]:
     return tfds.load(name, *args, **kwargs)
-
-
-def get_sample_by_index(dataset: Dataset, index: int):
-    for sample in dataset.skip(index).take(1):
-        return sample
 
 
 def plot_samples(dataset: Dataset, class_: SampleClass):
@@ -140,52 +24,70 @@ def plot_samples(dataset: Dataset, class_: SampleClass):
     for index in range(0, col1 * row1):
         fig.add_subplot(row1, col1, index + 1)
         plt.axis('off')
-        plt.imshow(get_sample_by_index(dataset, index))  # index of the sample picture
+        plt.imshow(dataset[index])  # index of the sample picture
         plt.title("Class " + class_.name)
     plt.show()
 
 
-def main():
-    dataset_name = 'cifar100'
-    number_of_clients = 10
-    number_of_main_classes_per_client = 5
-    main_class_ownership_per_client_ratio = 0.7
-
-    whole_dataset, dataset_info = load_dataset(dataset_name, split='all', with_info=True, as_supervised=True)
-    raw_dataset_classes = RawDatasetClasses(dataset_info)
-
-    number_of_classes = len(raw_dataset_classes)
-    number_of_samples = len(whole_dataset)
-
-    client_ids = [client_id for client_id in range(number_of_clients)]
-
-    samples_per_class = {class_: [] for class_ in raw_dataset_classes}
-    for sample, label in whole_dataset:
-        class_ = raw_dataset_classes[int(label.numpy())]
+def get_samples_per_class(dataset: PrefetchDataset, classes: RawDatasetClasses) -> dict[SampleClass, list[EagerTensor]]:
+    samples_per_class = {class_: [] for class_ in classes}
+    for sample_value, label in dataset:
+        class_ = classes[int(label.numpy())]
+        sample = Sample(sample_value, class_)
         samples_per_class[class_].append(sample)
 
+    return samples_per_class
+
+
+def get_class_datasets(samples_per_class: dict[SampleClass, list[EagerTensor]]) -> dict[SampleClass, ClassDataset]:
     class_datasets = {}
     for class_, samples in samples_per_class.items():
         class_datasets[class_] = ClassDataset(class_, samples)
 
-    main_classes_per_client = []
-    for i in range(0, number_of_classes, number_of_main_classes_per_client):
-        main_classes_per_client.append(raw_dataset_classes[i: i + number_of_main_classes_per_client])
+    return class_datasets
 
-    client_samples = {client_id: [] for client_id in client_ids}
+
+def get_main_classes_per_client(
+        classes: RawDatasetClasses,
+        number_of_main_classes_per_client: int,
+        class_datasets: RawDatasetClasses
+) -> list[list[SampleClass]]:
+    main_classes_per_client = []
+    for i in range(0, len(classes), number_of_main_classes_per_client):
+        main_classes_per_client.append(class_datasets[i: i + number_of_main_classes_per_client])
+
+    return main_classes_per_client
+
+
+def __distribute_main_class_samples_between_client_datasets(
+        number_of_clients: int,
+        main_classes_per_client: list[list[SampleClass]],
+        class_datasets: dict[SampleClass, ClassDataset],
+        client_main_class_ownership_ratio: float
+) -> dict[int, list[Sample]]:
+    client_samples = {client_id: [] for client_id in range(number_of_clients)}
     for client_id, client_classes in zip(client_samples, main_classes_per_client):
         for class_ in client_classes:
             dataset = class_datasets[class_]
-            number_of_samples_per_main_class = int(len(dataset) * main_class_ownership_per_client_ratio)
+            number_of_samples_per_main_class = int(len(dataset) * client_main_class_ownership_ratio)
             samples = [Sample(value, class_) for value in dataset[0: number_of_samples_per_main_class]]
             client_samples[client_id].extend(samples)
             dataset.truncate(number_of_samples_per_main_class)
 
-    samples_of_side_class_per_client = {class_: len(dataset) / number_of_clients for class_, dataset in
-                                        class_datasets.items()}
+    return client_samples
 
+
+def __distribute_side_class_samples_between_client_datasets(
+        client_samples: dict[int, list[Sample]],
+        main_classes_per_client: list[list[SampleClass]],
+        class_datasets: dict[SampleClass, ClassDataset],
+        classes: RawDatasetClasses
+) -> dict[int, list[Sample]]:
+    samples_of_side_class_per_client = {
+        class_: len(dataset) / len(client_samples) for class_, dataset in class_datasets.items()
+    }
     for client_id, client_classes in zip(client_samples, main_classes_per_client):
-        side_classes = list(set(raw_dataset_classes).difference(set(client_classes)))
+        side_classes = list(set(classes).difference(set(client_classes)))
         for class_ in side_classes:
             dataset = class_datasets[class_]
             number_of_samples_per_side_class = int(samples_of_side_class_per_client[class_])
@@ -193,10 +95,55 @@ def main():
             client_samples[client_id].extend(samples)
             dataset.truncate(number_of_samples_per_side_class)
 
-    for client_id, samples in client_samples.items():
-        if client_id == 1:
-            print(f'================== ID = {client_id} ==================')
-            samples_string = ''.join([f'{class_.name} - {len([sample for sample in samples if sample.class_.name == class_.name])} \n' for class_ in raw_dataset_classes])
+    return client_samples
+
+
+def distribute_samples_between_client_datasets(
+        number_of_clients: int,
+        main_classes_per_client: list[list[SampleClass]],
+        class_datasets: dict[SampleClass, ClassDataset],
+        client_main_class_ownership_ratio: float,
+        classes: RawDatasetClasses,
+) -> dict[int, ClientDataset]:
+    client_samples = __distribute_main_class_samples_between_client_datasets(number_of_clients, main_classes_per_client,
+                                                                             class_datasets,
+                                                                             client_main_class_ownership_ratio)
+
+    client_samples = __distribute_side_class_samples_between_client_datasets(client_samples, main_classes_per_client,
+                                                                             class_datasets, classes)
+
+    client_datasets = {client_id: ClientDataset(samples) for client_id, samples in client_samples.items()}
+
+    return client_datasets
+
+
+def main():
+    dataset_name = 'cifar100'
+    number_of_clients = 10
+    number_of_main_classes_per_client = 10
+    main_class_ownership_per_client_ratio = 0.7
+
+    whole_dataset, dataset_info = load_dataset(dataset_name, split='all', with_info=True, as_supervised=True)
+
+    dataset_classes = RawDatasetClasses(dataset_info)
+
+    samples_per_class = get_samples_per_class(whole_dataset, dataset_classes)
+
+    main_classes_per_client = get_main_classes_per_client(dataset_classes, number_of_main_classes_per_client,
+                                                          dataset_classes)
+
+    class_datasets = get_class_datasets(samples_per_class)
+
+    client_datasets = distribute_samples_between_client_datasets(number_of_clients, main_classes_per_client,
+                                                                 class_datasets, main_class_ownership_per_client_ratio,
+                                                                 dataset_classes)
+
+    clients = [Client(client_id, client_dataset) for client_id, client_dataset in client_datasets.items()]
+
+    for client in clients:
+        if client.id == 1:
+            print(f'================== ID = {client.id} ==================')
+            samples_string = ''.join([f'{class_.name} - {len([sample for sample in client.dataset.samples if sample.class_.name == class_.name])} \n' for class_ in dataset_classes])
             print(samples_string)
             print('========================================')
 
