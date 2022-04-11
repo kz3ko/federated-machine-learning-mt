@@ -1,4 +1,4 @@
-from dataset import ClientDataset
+from data_provider.dataset import ClientDataset
 
 
 class Client:

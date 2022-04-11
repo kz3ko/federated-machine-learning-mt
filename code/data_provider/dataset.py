@@ -6,7 +6,7 @@ from tensorflow_datasets.core.dataset_info import DatasetInfo
 from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.data import Dataset
 
-from models import SampleClass, Sample
+from data_provider.models import SampleClass, Sample
 
 
 class TruncatePoint(Enum):
