@@ -4,7 +4,7 @@ from tensorflow.python.framework.ops import EagerTensor
 
 
 @dataclass(unsafe_hash=True)
-class SampleClass:
+class ClassLabel:
     id: int
     name: str
 
@@ -12,4 +12,4 @@ class SampleClass:
 @dataclass(unsafe_hash=True)
 class Sample:
     value: EagerTensor
-    class_: SampleClass
+    class_label: ClassLabel

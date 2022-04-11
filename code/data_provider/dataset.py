@@ -2,52 +2,15 @@ from typing import Union, Generator
 from enum import Enum
 from abc import ABC
 
-from tensorflow_datasets.core.dataset_info import DatasetInfo
 from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.data import Dataset
 
-from data_provider.models import SampleClass, Sample
+from data_provider.models import ClassLabel, Sample
 
 
 class TruncatePoint(Enum):
     FIRST = 'first'
     LAST = 'last'
-
-
-class RawDatasetClasses:
-
-    def __init__(self, dataset_info: DatasetInfo):
-        self.classes = self.__get_dataset_classes(dataset_info)
-
-    def __repr__(self) -> str:
-        return str(self.classes)
-
-    def __len__(self) -> int:
-        return len(self.classes)
-
-    def __iter__(self) -> Generator[SampleClass, None, None]:
-        for class_ in self.classes:
-            yield class_
-
-    def __getitem__(self, key: Union[int, str, slice]) -> Union[SampleClass, list[SampleClass]]:
-        if isinstance(key, int):
-            [output] = filter(lambda cls: cls.id == key, self.classes)
-        elif isinstance(key, str):
-            [output] = filter(lambda cls: cls.name == key, self.classes)
-        elif isinstance(key, slice):
-            start = key.start if key.start else 0
-            stop = key.stop
-            step = key.step if key.step else 1
-            output = self.classes[start: stop: step]
-        else:
-            raise TypeError(f'{self.__class__.__name__} indices must be "int", "str" or "slice", not {type(key)}.')
-
-        return output
-
-    @staticmethod
-    def __get_dataset_classes(dataset_info: DatasetInfo) -> list[SampleClass]:
-        return [SampleClass(dataset_info.features['label'].str2int(name), name) for name in
-                dataset_info.features['label'].names]
 
 
 class CustomDataset(ABC):
@@ -91,6 +54,18 @@ class CustomDataset(ABC):
 
         self.data = self.__get_data_from_samples(self.samples)
 
+    def pop(self, number: int, where: TruncatePoint = TruncatePoint.FIRST) -> Union[EagerTensor, list[EagerTensor]]:
+        if where == TruncatePoint.FIRST:
+            popped_samples = self.samples[:number]
+        elif where == TruncatePoint.LAST:
+            popped_samples = self.samples[-number:]
+        else:
+            raise TypeError('You can only truncate first or last samples from dataset!')
+
+        self.truncate(number, where)
+
+        return popped_samples
+
     @staticmethod
     def __get_data_from_samples(samples: list[Sample]) -> Dataset:
         return Dataset.from_tensor_slices([sample.value for sample in samples])
@@ -98,9 +73,9 @@ class CustomDataset(ABC):
 
 class ClassDataset(CustomDataset):
 
-    def __init__(self, class_: SampleClass, samples: list[EagerTensor]):
+    def __init__(self, class_label: ClassLabel, samples: list[EagerTensor]):
         super(ClassDataset, self).__init__(samples)
-        self.class_ = class_
+        self.class_label = class_label
 
 
 class ClientDataset(CustomDataset):

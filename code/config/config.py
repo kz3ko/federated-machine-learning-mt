@@ -1,8 +1,11 @@
+from enum import Enum
 from dataclasses import dataclass, field
 
 from utilities.utils import get_data_from_json
 
-CONFIG_PATH = './config/config.json'
+
+class ConfigPath(Enum):
+    MAIN_CONFIG = './config/config.json'
 
 
 @dataclass
@@ -18,8 +21,8 @@ class Config:
     data_distribution: DataDistributionConfig = field(init=False)
 
     def __post_init__(self):
-        __config = get_data_from_json(CONFIG_PATH)
-        self.data_distribution = DataDistributionConfig(**__config['data_distribution'])
+        main_config = get_data_from_json(ConfigPath.MAIN_CONFIG.value)
+        self.data_distribution = DataDistributionConfig(**main_config['data_distribution'])
 
 
 config = Config()
