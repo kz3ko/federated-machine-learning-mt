@@ -22,7 +22,7 @@ def plot_samples(dataset: Dataset, class_: SampleClass):
 
 def main():
     data_distributor = DataDistributor(config.data_distribution)
-    client_datasets = data_distributor.get_client_datasets()
+    client_datasets = data_distributor.create_client_datasets()
     clients = [Client(client_id, client_dataset) for client_id, client_dataset in client_datasets.items()]
 
     for client in clients:

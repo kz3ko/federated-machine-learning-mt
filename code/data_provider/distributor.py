@@ -17,7 +17,7 @@ class DataDistributor:
                                                              as_supervised=True)
         self.dataset_classes = RawDatasetClasses(self.dataset_info)
 
-    def get_client_datasets(self) -> dict[int, ClientDataset]:
+    def create_client_datasets(self) -> dict[int, ClientDataset]:
         samples_per_class = self.__get_samples_per_class()
         class_datasets = self.__get_class_datasets(samples_per_class)
         main_classes_per_client = self.__get_main_classes_per_client()
