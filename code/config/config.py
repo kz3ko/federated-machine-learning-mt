@@ -11,6 +11,7 @@ class ConfigPath(Enum):
 @dataclass
 class DataDistributionConfig:
     dataset_name: str
+    test_data_ratio: float
     clients_number: int
     main_classes_per_client_number: int
     main_class_ownership_per_client_ratio: float

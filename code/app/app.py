@@ -3,13 +3,14 @@ from random import shuffle
 from learning_participants.client import Client
 from config.config import config
 from data_provider.distributor import DataDistributor
-from visualisation.plotter import plot_samples
+from visualisation.plotter import plot_samples, plot_client_data_distribution
 
 
 class App:
 
     def __init__(self):
         self.data_distributor = DataDistributor(config.data_distribution)
+        self.test_dataset = self.data_distributor.create_test_dataset()
         self.clients = self.__create_clients(self.data_distributor)
 
     def run(self):
@@ -21,8 +22,9 @@ class App:
         print(samples_string)
         print('========================================')
 
+        # plot_samples(samples[0:25])
+        plot_client_data_distribution(client.dataset)
         print('Done!')
-        plot_samples(samples[0:25])
 
     @staticmethod
     def __create_clients(data_distributor: DataDistributor) -> list[Client]:
