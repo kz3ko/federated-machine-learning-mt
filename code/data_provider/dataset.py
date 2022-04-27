@@ -5,7 +5,6 @@ from enum import Enum
 from abc import ABC
 
 from numpy import array
-from keras.utils import to_categorical
 
 from data_provider.models import ClassLabel, Sample
 from utilities.utils import get_shuffled_data
