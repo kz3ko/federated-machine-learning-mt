@@ -4,14 +4,14 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import sparse_categorical_crossentropy
-from tensorflow.keras.callbacks import History
+from tensorflow.keras.callbacks import History, EarlyStopping
 
-from data_provider.dataset import ClientDataset
+from data_provider.dataset import CustomDataset
 
 
 class NeuralNetworkModel(ABC):
 
-    def __init__(self, dataset: ClientDataset):
+    def __init__(self, dataset: CustomDataset):
         self.input_values = dataset.input_values
         self.target_labels = dataset.target_labels
         self.history = None
@@ -34,6 +34,9 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         verbosity = 1
         validation_split = 0.2
 
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        callbacks = [early_stopping]
+
         self.history = self.base_model.fit(
             self.input_values,
             self.target_labels,
@@ -41,6 +44,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
             epochs=number_of_epochs,
             verbose=verbosity,
             validation_split=validation_split,
+            callbacks=callbacks,
             shuffle=True
         )
 

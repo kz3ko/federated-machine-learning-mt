@@ -2,7 +2,7 @@ from typing import Type
 
 from numpy.random import shuffle
 
-from learning.client import Client
+from learning.participants import Client, Server
 from config.config import config
 from data_provider.distributor import DataDistributor
 from data_provider.normalizer import Normalizer
@@ -16,16 +16,21 @@ class App:
     def __init__(self):
         self.normalizer = Normalizer()
         self.data_distributor = DataDistributor(config.data_distribution, self.normalizer)
-        self.test_dataset = self.data_distributor.create_test_dataset()
-        self.clients = self.__create_clients(self.data_distributor, FirstNeuralNetworkModel)
+        model_class = FirstNeuralNetworkModel
+        self.server = self.__create_server(model_class)
+        self.clients = self.__create_clients(model_class)
 
     def run(self):
-        client_models = []
-        for client in self.clients:
-            client_model = client.train_model()
-            client_models.append(client_model)
-            break
+        learning_timestamp = '2305_06422022'
+        client_models = [client.read_model('2305_06422022') for client in self.clients]
+        self.server.read_model('2305_06422022')
 
+    def main_run(self):
+        client_models = [client.train_model() for client in self.clients]
+        for client in self.clients:
+            client.save_model()
+
+        self.server.save_model()
 
     def plot(self):
         client = self.clients[0]
@@ -40,10 +45,16 @@ class App:
         plot_client_data_distribution(client.dataset)
         print('Done!')
 
-    @staticmethod
-    def __create_clients(data_distributor: DataDistributor, model_class: Type[NeuralNetworkModel]) -> list[Client]:
+    def __create_server(self, model_class: Type[NeuralNetworkModel]) -> Server:
+        test_dataset = self.data_distributor.create_test_dataset()
+        server_model = model_class(test_dataset)
+        server = Server(test_dataset, server_model)
+
+        return server
+
+    def __create_clients(self, model_class: Type[NeuralNetworkModel]) -> list[Client]:
         clients = []
-        client_datasets = data_distributor.create_client_datasets()
+        client_datasets = self.data_distributor.create_client_datasets()
         for client_id, client_dataset in client_datasets.items():
             client_model = model_class(client_dataset)
             client = Client(client_id, client_dataset, client_model)

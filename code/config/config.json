@@ -4,6 +4,6 @@
     "test_data_ratio": 0.2,
     "clients_number": 10,
     "main_classes_per_client_number": 10,
-    "main_class_ownership_per_client_ratio": 1
+    "main_class_ownership_per_client_ratio": 0.6
   }
 }
