@@ -1,6 +1,6 @@
 from tensorflow.python.framework.ops import EagerTensor
 
-from data_provider.loader import DatasetLoader
+from data_provider.loader import load_dataset
 from data_provider.models import ClassLabel, Sample
 from data_provider.dataset import ClassDataset, ClientDataset, TestDataset
 from data_provider.class_labels import DatasetClassLabels
@@ -17,8 +17,7 @@ class DataDistributor:
         self.main_classes_per_client_number = config.main_classes_per_client_number
         self.normalizer = normalizer
         self.main_class_ownership_per_client_ratio = config.main_class_ownership_per_client_ratio
-        self.dataset, self.dataset_info = DatasetLoader.load(self.dataset_name, split='all', with_info=True,
-                                                        as_supervised=True)
+        self.dataset, self.dataset_info = load_dataset(self.dataset_name, split='all', with_info=True, as_supervised=True)
         self.dataset_class_labels = DatasetClassLabels(self.dataset_info)
         self.class_datasets = self.__create_class_datasets()
 

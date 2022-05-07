@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import sparse_categorical_crossentropy
@@ -11,46 +11,60 @@ from data_provider.dataset import CustomDataset
 
 class NeuralNetworkModel(ABC):
 
-    def __init__(self, dataset: CustomDataset):
-        self.input_values = dataset.input_values
-        self.target_labels = dataset.target_labels
-        self.history = None
+    history: History
+    batch_size: int
+
+    def __init__(self):
         self.base_model = self._create_base_model()
 
-    @abstractmethod
-    def train(self):
-        pass
+    def test(self, dataset: CustomDataset) -> [float, float]:
+        loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
+        return loss, accuracy
+
+    def save(self, target_path):
+        self.base_model.save(target_path)
+
+    def load(self, model_path):
+        self.base_model = load_model(model_path)
 
     @abstractmethod
-    def _create_base_model(self) -> Sequential:
+    def train(self, dataset: CustomDataset):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _create_base_model() -> Sequential:
         pass
 
 
 class FirstNeuralNetworkModel(NeuralNetworkModel):
 
-    def train(self) -> History:
-        number_of_epochs = 50
-        batch_size = 256
-        verbosity = 1
-        validation_split = 0.2
+    def __init__(self):
+        super().__init__()
+        self.number_of_epochs = 50
+        self.batch_size = 256
+        self.verbosity = 1
+        self.validation_split = 0.2
+        self.callbacks = [
+            EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        ]
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-        callbacks = [early_stopping]
-
+    def train(self, dataset: CustomDataset) -> History:
         self.history = self.base_model.fit(
-            self.input_values,
-            self.target_labels,
-            batch_size=batch_size,
-            epochs=number_of_epochs,
-            verbose=verbosity,
-            validation_split=validation_split,
-            callbacks=callbacks,
+            dataset.input_values,
+            dataset.target_labels,
+            batch_size=self.batch_size,
+            epochs=self.number_of_epochs,
+            verbose=self.verbosity,
+            validation_split=self.validation_split,
+            callbacks=self.callbacks,
             shuffle=True
         )
 
         return self.history
 
-    def _create_base_model(self) -> Sequential:
+    @staticmethod
+    def _create_base_model() -> Sequential:
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)))
         model.add(MaxPooling2D(pool_size=(2, 2)))

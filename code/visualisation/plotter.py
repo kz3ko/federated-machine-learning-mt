@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 from math import ceil
 
 from data_provider.models import Sample
-from data_provider.dataset import ClientDataset
+from data_provider.dataset import CustomDataset
 
 
 def plot_samples(samples: list[Sample]):
@@ -20,7 +20,7 @@ def plot_samples(samples: list[Sample]):
     plt.show()
 
 
-def plot_client_data_distribution(dataset: ClientDataset):
+def plot_client_data_distribution(dataset: CustomDataset):
     plt.rcParams['figure.figsize'] = (18, 9)
     class_labels = [sample.name for sample in dataset.number_of_samples_per_class.keys()]
     class_labels_numbers = list(dataset.number_of_samples_per_class.values())

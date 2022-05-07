@@ -3,7 +3,6 @@ from typing import Union
 from abc import ABC, abstractmethod
 
 from tensorflow.keras.callbacks import History
-from tensorflow.keras.models import load_model
 
 from learning.neural_network import NeuralNetworkModel
 from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
@@ -22,20 +21,23 @@ class LearningParticipant(ABC):
 
     def train_model(self) -> NeuralNetworkModel:
         info(f'Training model for participant with id "{self.id}".')
-        self.history = self.model.train()
+        self.history = self.model.train(self.dataset)
 
         return self.model
 
+    def test_model(self, dataset: CustomDataset) -> [float, float]:
+        return self.model.test(dataset)
+
     def save_model(self):
-        saved_model_path = f'{generated_data_path.models}/{self.model_name}.h5'
-        info(f'Saving model for participant with id "{self.id}" in path: "{saved_model_path}".')
-        self.model.base_model.save(saved_model_path)
+        target_path = f'{generated_data_path.models}/{self.model_name}.h5'
+        info(f'Saving model for participant with id "{self.id}" in path: "{target_path}".')
+        self.model.save(target_path)
 
     def read_model(self, timestamp: str):
-        models_path = generated_data_path.get_models_path_for_timestamp(timestamp)
-        model_to_read_path = f'{models_path}/{self.model_name}.h5'
-        info(f'Reading model for participant with id "{self.id}" from path: "{model_to_read_path}".')
-        self.model.base_model = load_model(model_to_read_path)
+        models_directory_path = generated_data_path.get_models_path_for_timestamp(timestamp)
+        model_path = f'{models_directory_path}/{self.model_name}.h5'
+        info(f'Reading model for participant with id "{self.id}" from path: "{model_path}".')
+        self.model.load(model_path)
 
     @abstractmethod
     def _get_model_name_to_save(self) -> str:

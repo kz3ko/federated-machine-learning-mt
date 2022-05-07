@@ -8,7 +8,7 @@ class GeneratedDataPath:
     plots: str = field(init=False)
 
     def __post_init__(self):
-        timestamp = datetime.now().strftime('%H%m_%d%M%Y')
+        timestamp = datetime.now().strftime('%H%M_%d%m%Y')
         self.models = f'generated_data/models/{timestamp}'
         self.plots = f'generated_data/plots/{timestamp}'
 
@@ -20,9 +20,9 @@ class GeneratedDataPath:
 
     @staticmethod
     def __get_generated_data_path_for_timestamp(data_path: str, timestamp) -> str:
-        generated_data_root_path = data_path.rsplit('/', 1)[0]
+        data_path_without_timestamp = data_path.rsplit('/', 1)[0]
 
-        return f'{generated_data_root_path}/{timestamp}'
+        return f'{data_path_without_timestamp}/{timestamp}'
 
 
 generated_data_path = GeneratedDataPath()

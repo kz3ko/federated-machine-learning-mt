@@ -1,5 +1,6 @@
 from typing import Type
 
+from numpy import array
 from numpy.random import shuffle
 
 from learning.participants import Client, Server
@@ -16,14 +17,52 @@ class App:
     def __init__(self):
         self.normalizer = Normalizer()
         self.data_distributor = DataDistributor(config.data_distribution, self.normalizer)
+        self.test_dataset = self.data_distributor.create_test_dataset()
         model_class = FirstNeuralNetworkModel
         self.server = self.__create_server(model_class)
         self.clients = self.__create_clients(model_class)
 
     def run(self):
-        learning_timestamp = '2305_06422022'
-        client_models = [client.read_model('2305_06422022') for client in self.clients]
-        self.server.read_model('2305_06422022')
+        learning_timestamp = '2341_07052022'
+        client = self.clients[0]
+        client.read_model(learning_timestamp)
+        self.server.read_model(learning_timestamp)
+        another_server = self.__create_server(FirstNeuralNetworkModel)
+
+        client_models_weights = [client.model.base_model.get_weights() for client in self.clients]
+        averaged_weights = list()
+        for weights_list_tuple in zip(*client_models_weights):
+            averaged_weights.append(array([array(weights).mean(axis=0) for weights in zip(*weights_list_tuple)]))
+        averaged_weights = array(averaged_weights)
+
+        loss, accuracy = client.test_model(self.test_dataset)
+        print(f'Client test loss: {loss}')
+        print(f'Client test accuracy: {accuracy}\n')
+
+        client.model.base_model.set_weights(averaged_weights)
+        loss, accuracy = client.test_model(self.test_dataset)
+        print(f'Client test loss after setting mean weights: {loss}')
+        print(f'Client test accuracy after setting mean weights: {accuracy}\n')
+
+        loss, accuracy = self.server.test_model(self.test_dataset)
+        print(f'Server test loss: {loss}')
+        print(f'Server test accuracy: {accuracy}\n')
+
+        self.server.model.base_model.set_weights(averaged_weights)
+        loss, accuracy = self.server.test_model(self.test_dataset)
+        print(f'Server test loss after setting mean weights: {loss}')
+        print(f'Server test accuracy after setting mean weights: {accuracy}\n')
+
+        another_server.train_model()
+        loss, accuracy = another_server.test_model(self.test_dataset)
+        print(f'Another server test loss: {loss}')
+        print(f'Another server test accuracy: {accuracy}\n')
+
+        another_server.model.base_model.set_weights(averaged_weights)
+        loss, accuracy = another_server.test_model(self.test_dataset)
+        print(f'Another server test loss after setting mean weights: {loss}')
+        print(f'Another server test accuracy after setting mean weights: {accuracy}\n')
+
 
     def main_run(self):
         client_models = [client.train_model() for client in self.clients]
@@ -46,9 +85,8 @@ class App:
         print('Done!')
 
     def __create_server(self, model_class: Type[NeuralNetworkModel]) -> Server:
-        test_dataset = self.data_distributor.create_test_dataset()
-        server_model = model_class(test_dataset)
-        server = Server(test_dataset, server_model)
+        server_model = model_class()
+        server = Server(self.test_dataset, server_model)
 
         return server
 
@@ -56,7 +94,7 @@ class App:
         clients = []
         client_datasets = self.data_distributor.create_client_datasets()
         for client_id, client_dataset in client_datasets.items():
-            client_model = model_class(client_dataset)
+            client_model = model_class()
             client = Client(client_id, client_dataset, client_model)
             clients.append(client)
 
