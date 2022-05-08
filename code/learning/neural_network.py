@@ -15,7 +15,8 @@ class NeuralNetworkModel(ABC):
     history: History
     batch_size: int
 
-    def __init__(self):
+    def __init__(self, epochs: int):
+        self.epochs = epochs
         self.base_model = self._create_base_model()
 
     def test(self, dataset: CustomDataset) -> [float, float]:
@@ -46,9 +47,8 @@ class NeuralNetworkModel(ABC):
 
 class FirstNeuralNetworkModel(NeuralNetworkModel):
 
-    def __init__(self):
-        super().__init__()
-        self.number_of_epochs = 1
+    def __init__(self, epochs: int):
+        super().__init__(epochs)
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
@@ -61,7 +61,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
             dataset.input_values,
             dataset.target_labels,
             batch_size=self.batch_size,
-            epochs=self.number_of_epochs,
+            epochs=self.epochs,
             verbose=self.verbosity,
             validation_split=self.validation_split,
             callbacks=self.callbacks,
@@ -82,7 +82,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         model.add(Flatten())
         model.add(Dense(256, activation='relu'))
         model.add(Dense(128, activation='relu'))
-        model.add(Dense(10, activation='softmax'))
+        model.add(Dense(100, activation='softmax'))
 
         model.compile(loss=sparse_categorical_crossentropy, optimizer=Adam(), metrics=['accuracy'])
 

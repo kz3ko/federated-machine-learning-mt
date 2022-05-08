@@ -13,7 +13,7 @@ from generated_data.path import generated_data_path
 class LearningParticipant(ABC):
 
     id: Union[str, int]
-    history: History
+    latest_learning_history: History
 
     def __init__(self, dataset: CustomDataset, model: NeuralNetworkModel):
         self.dataset = dataset
@@ -22,7 +22,7 @@ class LearningParticipant(ABC):
 
     def train_model(self) -> NeuralNetworkModel:
         info(f'Training model for participant with id "{self.id}".')
-        self.history = self.model.train(self.dataset)
+        self.latest_learning_history = self.model.train(self.dataset)
 
         return self.model
 
