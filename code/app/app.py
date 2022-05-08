@@ -2,6 +2,7 @@ from typing import Type
 
 from numpy import array
 from numpy.random import shuffle
+from pandas import DataFrame
 
 from learning.participants import Client, Server
 from config.config import config
@@ -21,48 +22,36 @@ class App:
         model_class = FirstNeuralNetworkModel
         self.server = self.__create_server(model_class)
         self.clients = self.__create_clients(model_class)
+        self.learning_rounds = 300
 
     def run(self):
-        learning_timestamp = '2341_07052022'
-        client = self.clients[0]
-        client.read_model(learning_timestamp)
-        self.server.read_model(learning_timestamp)
-        another_server = self.__create_server(FirstNeuralNetworkModel)
+        results = {'learning_round': [], 'accuracy': [], 'loss': []}
+        for learning_round in range(1, self.learning_rounds + 1):
+            server_weights = self.server.model.base_model.get_weights()
+            for client in self.clients:
+                client.model.base_model.set_weights(server_weights)
+                client.train_model()
 
-        client_models_weights = [client.model.base_model.get_weights() for client in self.clients]
-        averaged_weights = list()
-        for weights_list_tuple in zip(*client_models_weights):
-            averaged_weights.append(array([array(weights).mean(axis=0) for weights in zip(*weights_list_tuple)]))
-        averaged_weights = array(averaged_weights)
+            client_models_weights = [client.model.base_model.get_weights() for client in self.clients]
+            averaged_weights = list()
+            for weights_list_tuple in zip(*client_models_weights):
+                averaged_weights.append(array([array(weights).mean(axis=0) for weights in zip(*weights_list_tuple)]))
 
-        loss, accuracy = client.test_model(self.test_dataset)
-        print(f'Client test loss: {loss}')
-        print(f'Client test accuracy: {accuracy}\n')
+            self.server.model.base_model.set_weights(averaged_weights)
+            loss, accuracy = self.server.test_model(self.test_dataset)
+            print(f'Server test loss after {learning_round} learning round: {loss}')
+            print(f'Server test accuracy after {learning_round} learning round: {accuracy}\n')
 
-        client.model.base_model.set_weights(averaged_weights)
-        loss, accuracy = client.test_model(self.test_dataset)
-        print(f'Client test loss after setting mean weights: {loss}')
-        print(f'Client test accuracy after setting mean weights: {accuracy}\n')
+            results['learning_round'].append(learning_round)
+            results['accuracy'].append(accuracy)
+            results['loss'].append(loss)
 
-        loss, accuracy = self.server.test_model(self.test_dataset)
-        print(f'Server test loss: {loss}')
-        print(f'Server test accuracy: {accuracy}\n')
+        results_dataframe = DataFrame(results)
+        results_dataframe.to_csv('results.csv')
 
-        self.server.model.base_model.set_weights(averaged_weights)
-        loss, accuracy = self.server.test_model(self.test_dataset)
-        print(f'Server test loss after setting mean weights: {loss}')
-        print(f'Server test accuracy after setting mean weights: {accuracy}\n')
-
-        another_server.train_model()
-        loss, accuracy = another_server.test_model(self.test_dataset)
-        print(f'Another server test loss: {loss}')
-        print(f'Another server test accuracy: {accuracy}\n')
-
-        another_server.model.base_model.set_weights(averaged_weights)
-        loss, accuracy = another_server.test_model(self.test_dataset)
-        print(f'Another server test loss after setting mean weights: {loss}')
-        print(f'Another server test accuracy after setting mean weights: {accuracy}\n')
-
+        for client in self.clients:
+            client.save_model()
+        self.server.save_model()
 
     def main_run(self):
         client_models = [client.train_model() for client in self.clients]

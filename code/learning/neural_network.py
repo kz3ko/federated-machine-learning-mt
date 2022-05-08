@@ -41,7 +41,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
 
     def __init__(self):
         super().__init__()
-        self.number_of_epochs = 50
+        self.number_of_epochs = 1
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
