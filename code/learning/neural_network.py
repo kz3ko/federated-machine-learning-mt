@@ -52,9 +52,6 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
-        self.callbacks = [
-            EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-        ]
 
     def train(self, dataset: CustomDataset) -> History:
         self.history = self.base_model.fit(
@@ -64,7 +61,6 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
             epochs=self.epochs,
             verbose=self.verbosity,
             validation_split=self.validation_split,
-            callbacks=self.callbacks,
             shuffle=True
         )
 
@@ -82,7 +78,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         model.add(Flatten())
         model.add(Dense(256, activation='relu'))
         model.add(Dense(128, activation='relu'))
-        model.add(Dense(100, activation='softmax'))
+        model.add(Dense(10, activation='softmax'))
 
         model.compile(loss=sparse_categorical_crossentropy, optimizer=Adam(), metrics=['accuracy'])
 

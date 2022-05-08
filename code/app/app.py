@@ -8,14 +8,12 @@ from learning.neural_network import FirstNeuralNetworkModel
 class App:
 
     def __init__(self):
-        self.config = config
-
         data_distributor = DataDistributor(config.data_distribution)
         test_dataset = data_distributor.create_test_dataset()
         client_datasets = data_distributor.create_client_datasets()
 
         model_class = FirstNeuralNetworkModel
-        participant_creator = ParticipantCreator(test_dataset, client_datasets, model_class)
+        participant_creator = ParticipantCreator(config.learning, test_dataset, client_datasets, model_class)
         server = participant_creator.create_server()
         clients = participant_creator.create_clients()
 
