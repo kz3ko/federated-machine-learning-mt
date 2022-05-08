@@ -7,7 +7,7 @@
     "main_class_ownership_per_client_ratio": 0.6
   },
   "learning": {
-    "iterations": 100,
+    "iterations": 50,
     "iterations_to_aggregate": 1
   }
 }

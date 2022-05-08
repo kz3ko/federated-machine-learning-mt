@@ -1,5 +1,5 @@
 from logging import info
-from typing import Union, Type
+from typing import Union
 from abc import ABC, abstractmethod
 
 from tensorflow.keras.callbacks import History
@@ -20,11 +20,11 @@ class LearningParticipant(ABC):
         self.model = model
         self.model_name = self._get_model_name_to_save()
 
-    def train_model(self) -> NeuralNetworkModel:
+    def train_model(self):
         info(f'Training model for participant with id "{self.id}".')
         self.latest_learning_history = self.model.train(self.dataset)
 
-        return self.model
+        return self.latest_learning_history
 
     def test_model(self, dataset: CustomDataset) -> [float, float]:
         return self.model.test(dataset)

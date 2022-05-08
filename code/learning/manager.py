@@ -5,16 +5,19 @@ from numpy import array, average
 from learning.participant import Client, Server
 from config.config import LearningConfig
 from data_provider.dataset import TestDataset
+from analytics.statistics_collector import StatisticsCollector
 
 
 class FederatedLearningManager:
 
-    def __init__(self, config: LearningConfig, test_dataset: TestDataset, clients: list[Client], server: Server):
+    def __init__(self, config: LearningConfig, test_dataset: TestDataset, clients: list[Client], server: Server,
+                 statistics_collector: StatisticsCollector):
         self.iterations = config.iterations
         self.iterations_to_aggregate = config.iterations_to_aggregate
         self.test_dataset = test_dataset
         self.server = server
         self.clients = clients
+        self.statistics_collector = statistics_collector
 
     def run_learning_cycle(self):
         for iteration in range(1, self.iterations + 1):
@@ -22,6 +25,7 @@ class FederatedLearningManager:
             for client in self.clients:
                 client.set_model_weights(global_weights)
                 client.train_model()
+                self.statistics_collector.save_client_metrics(iteration, client)
 
             averaged_weights = self.__get_clients_models_averaged_weights()
             self.server.set_model_weights(averaged_weights)

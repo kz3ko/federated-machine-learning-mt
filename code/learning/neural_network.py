@@ -36,7 +36,7 @@ class NeuralNetworkModel(ABC):
         self.base_model = load_model(model_path)
 
     @abstractmethod
-    def train(self, dataset: CustomDataset):
+    def train(self, dataset: CustomDataset) -> History:
         pass
 
     @staticmethod
