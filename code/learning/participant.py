@@ -1,8 +1,9 @@
 from logging import info
-from typing import Union
+from typing import Union, Type
 from abc import ABC, abstractmethod
 
 from tensorflow.keras.callbacks import History
+from numpy import array
 
 from learning.neural_network import NeuralNetworkModel
 from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
@@ -27,6 +28,12 @@ class LearningParticipant(ABC):
 
     def test_model(self, dataset: CustomDataset) -> [float, float]:
         return self.model.test(dataset)
+
+    def get_model_weights(self) -> list[array]:
+        return self.model.get_weights()
+
+    def set_model_weights(self, new_weights: list[array]):
+        self.model.set_weights(new_weights)
 
     def save_model(self):
         target_path = f'{generated_data_path.models}/{self.model_name}.h5'

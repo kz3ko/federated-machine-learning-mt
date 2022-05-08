@@ -1,9 +1,9 @@
 {
   "data_distribution": {
-    "dataset_name": "cifar100",
+    "dataset_name": "cifar10",
     "test_data_ratio": 0.2,
-    "clients_number": 10,
-    "main_classes_per_client_number": 10,
+    "clients_number": 5,
+    "main_classes_per_client_number": 2,
     "main_class_ownership_per_client_ratio": 0.6
   },
   "learning": {

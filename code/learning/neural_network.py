@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import sparse_categorical_crossentropy
 from tensorflow.keras.callbacks import History, EarlyStopping
+from numpy import array
 
 from data_provider.dataset import CustomDataset
 
@@ -20,6 +21,12 @@ class NeuralNetworkModel(ABC):
     def test(self, dataset: CustomDataset) -> [float, float]:
         loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
         return loss, accuracy
+
+    def get_weights(self) -> list[array]:
+        return self.base_model.get_weights()
+
+    def set_weights(self, new_weights: list[array]):
+        self.base_model.set_weights(new_weights)
 
     def save(self, target_path):
         self.base_model.save(target_path)
@@ -75,7 +82,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         model.add(Flatten())
         model.add(Dense(256, activation='relu'))
         model.add(Dense(128, activation='relu'))
-        model.add(Dense(100, activation='softmax'))
+        model.add(Dense(10, activation='softmax'))
 
         model.compile(loss=sparse_categorical_crossentropy, optimizer=Adam(), metrics=['accuracy'])
 
