@@ -18,12 +18,20 @@ class DataDistributionConfig:
 
 
 @dataclass
+class LearningConfig:
+    iterations: int
+    iterations_to_aggregate: int
+
+
+@dataclass
 class Config:
     data_distribution: DataDistributionConfig = field(init=False)
+    learning: LearningConfig = field(init=False)
 
     def __post_init__(self):
         main_config = get_data_from_json(ConfigPath.MAIN_CONFIG.value)
         self.data_distribution = DataDistributionConfig(**main_config['data_distribution'])
+        self.learning = LearningConfig(**main_config['learning'])
 
 
 config = Config()

@@ -1,9 +1,10 @@
 from tensorflow.python.framework.ops import EagerTensor
 
-from data_provider.loader import DatasetLoader
+from data_provider.loader import load_dataset
 from data_provider.models import ClassLabel, Sample
 from data_provider.dataset import ClassDataset, ClientDataset, TestDataset
 from data_provider.class_labels import DatasetClassLabels
+from data_provider.normalizer import Normalizer
 from config.config import DataDistributionConfig
 
 
@@ -14,11 +15,12 @@ class DataDistributor:
         self.test_data_ratio = config.test_data_ratio
         self.clients_number = config.clients_number
         self.main_classes_per_client_number = config.main_classes_per_client_number
+        self.normalizer = Normalizer()
         self.main_class_ownership_per_client_ratio = config.main_class_ownership_per_client_ratio
-        self.dataset, self.dataset_info = DatasetLoader.load(self.dataset_name, split='all', with_info=True,
-                                                             as_supervised=True)
+        self.dataset, self.dataset_info = load_dataset(self.dataset_name, split='all', with_info=True,
+                                                       as_supervised=True)
         self.dataset_class_labels = DatasetClassLabels(self.dataset_info)
-        self.class_datasets = self.__get_class_datasets()
+        self.class_datasets = self.__create_class_datasets()
 
     def create_client_datasets(self) -> dict[int, ClientDataset]:
         main_classes_per_client = self.__get_main_classes_per_client()
@@ -37,16 +39,18 @@ class DataDistributor:
 
         return TestDataset(test_samples)
 
-    def __get_class_datasets(self) -> dict[ClassLabel, ClassDataset]:
+    def __create_class_datasets(self) -> dict[ClassLabel, ClassDataset]:
         samples_per_class = self.__get_samples_per_class()
-        return {class_label: ClassDataset(samples) for class_label, samples in samples_per_class.items()}
+        class_datasets = {class_label: ClassDataset(samples) for class_label, samples in samples_per_class.items()}
+        return class_datasets
 
     def __get_samples_per_class(self) -> dict[ClassLabel, list[EagerTensor]]:
         samples_per_class = {class_label: [] for class_label in self.dataset_class_labels}
         for sample_value, label in self.dataset:
             class_label = self.dataset_class_labels[int(label.numpy())]
             sample = Sample(sample_value, class_label)
-            samples_per_class[class_label].append(sample)
+            normalized_sample = self.normalizer.normalize_sample(sample)
+            samples_per_class[class_label].append(normalized_sample)
 
         return samples_per_class
 

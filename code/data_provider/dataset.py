@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Union, Generator
+from typing import Union, Generator, Tuple
 from enum import Enum
 from abc import ABC
 
-from tensorflow.python.data import Dataset
+from numpy import array
 
 from data_provider.models import ClassLabel, Sample
+from utilities.utils import get_shuffled_data
 
 
 class CutOffSide(Enum):
@@ -17,9 +18,10 @@ class CutOffSide(Enum):
 class CustomDataset(ABC):
 
     def __init__(self, samples: list[Sample]):
-        self.samples = samples
+        self.samples = get_shuffled_data(samples)
         self.number_of_samples_per_class = self.__count_samples_per_class(self.samples)
-        self.classic_dataset = self.__create_classic_dataset_from_samples(self.samples)
+        self.input_shape = self.__get_input_shape(self.samples)
+        self.input_values, self.target_labels = self.__get_model_inputs(self.samples)
 
     def __getitem__(self, key: int) -> Union[Sample, list[Sample]]:
         if isinstance(key, int):
@@ -27,7 +29,8 @@ class CustomDataset(ABC):
         elif isinstance(key, slice):
             start = key.start if key.start else 0
             stop = key.stop
-            output = self.samples[start: stop]
+            step = key.step
+            output = self.samples[start: stop: step]
         else:
             raise TypeError(f'{self.__class__.__name__} indices must be "int" or "slice", not {type(key)}.')
 
@@ -54,8 +57,6 @@ class CustomDataset(ABC):
         else:
             raise TypeError('You can only truncate first or last samples from dataset!')
 
-        self.classic_dataset = self.__create_classic_dataset_from_samples(self.samples)
-
     def pop(self, number: int, cut_off_side: CutOffSide = CutOffSide.FIRST) -> Union[Sample, list[Sample]]:
         if cut_off_side == CutOffSide.FIRST:
             popped_samples = self.samples[:number]
@@ -69,8 +70,8 @@ class CustomDataset(ABC):
         return popped_samples
 
     @staticmethod
-    def __create_classic_dataset_from_samples(samples: list[Sample]) -> Dataset:
-        return Dataset.from_tensor_slices([sample.value for sample in samples])
+    def __get_input_shape(samples: list[Sample]) -> Tuple[int, int, int]:
+        return samples[0].value.shape
 
     @staticmethod
     def __count_samples_per_class(samples: list[Sample]) -> dict[ClassLabel, int]:
@@ -78,6 +79,14 @@ class CustomDataset(ABC):
         sample_class_labels = [sample.class_label for sample in samples]
 
         return {class_label: sample_class_labels.count(class_label) for class_label in class_labels}
+
+    @staticmethod
+    def __get_model_inputs(samples: list[Sample]) -> tuple[array, array]:
+        values, labels = [
+            array(model_inputs) for model_inputs in zip(*[(sample.value, sample.class_label.id) for sample in samples])
+        ]
+
+        return array(values), array(labels)
 
 
 class ClassDataset(CustomDataset):
