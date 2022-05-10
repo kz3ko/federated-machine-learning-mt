@@ -31,12 +31,13 @@ class FederatedLearningManager:
             self.server.set_model_weights(averaged_weights)
             metrics = self.server.test_model(self.test_dataset)
             info(f'Server metrics after {iteration} iteration: loss = {metrics.loss}; accuracy = {metrics.accuracy}')
-            self.analytics_manager.save_server_metrics(metrics)
+            self.analytics_manager.save_server_metrics(iteration, metrics)
+
+        self.analytics_manager.save_collected_metrics_to_files()
 
     def save_models(self):
-        self.server.save_model()
-        for client in self.clients:
-            client.save_model()
+        for participant in [*self.clients, self.server]:
+            participant.save_model()
 
     def __get_clients_models_averaged_weights(self) -> list[array]:
         client_models_weights = [client.get_model_weights() for client in self.clients]

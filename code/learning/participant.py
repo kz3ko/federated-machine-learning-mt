@@ -28,7 +28,7 @@ class LearningParticipant(ABC):
     def __init__(self, dataset: CustomDataset, model: NeuralNetworkModel):
         self.dataset = dataset
         self.model = model
-        self.model_name = self._get_model_name_to_save()
+        self.full_name = self._get_participant_full_name()
 
     def train_model(self):
         info(f'Training model for participant with id "{self.id}".')
@@ -46,18 +46,18 @@ class LearningParticipant(ABC):
         self.model.set_weights(new_weights)
 
     def save_model(self):
-        target_path = f'{generated_data_path.models}/{self.model_name}.h5'
+        target_path = f'{generated_data_path.models}/{self.full_name}.h5'
         info(f'Saving model for participant with id "{self.id}" in path: "{target_path}".')
         self.model.save(target_path)
 
     def read_model(self, timestamp: str):
         models_directory_path = generated_data_path.get_models_path_for_timestamp(timestamp)
-        model_path = f'{models_directory_path}/{self.model_name}.h5'
+        model_path = f'{models_directory_path}/{self.full_name}.h5'
         info(f'Reading model for participant with id "{self.id}" from path: "{model_path}".')
         self.model.load(model_path)
 
     @abstractmethod
-    def _get_model_name_to_save(self) -> str:
+    def _get_participant_full_name(self) -> str:
         pass
 
 
@@ -67,8 +67,8 @@ class Server(LearningParticipant):
         self.id = 'server'
         super().__init__(dataset, model)
 
-    def _get_model_name_to_save(self) -> str:
-        return f'{self.id}_model'
+    def _get_participant_full_name(self) -> str:
+        return self.id
 
 
 class Client(LearningParticipant):
@@ -77,5 +77,5 @@ class Client(LearningParticipant):
         self.id = client_id
         super().__init__(dataset, model)
 
-    def _get_model_name_to_save(self) -> str:
-        return f'client_{self.id}_model'
+    def _get_participant_full_name(self) -> str:
+        return f'client_{self.id}'

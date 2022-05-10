@@ -1,4 +1,4 @@
-from config.config import config
+from config.manager import ConfigManager
 from data_provider.distributor import DataDistributor
 from learning.manager import FederatedLearningManager
 from learning.participant_creator import ParticipantCreator
@@ -9,6 +9,9 @@ from analytics.manager import AnalyticsManager
 class App:
 
     def __init__(self):
+        self.config_manager = ConfigManager()
+        config = self.config_manager.config
+
         data_distributor = DataDistributor(config.data_distribution)
         test_dataset = data_distributor.create_test_dataset()
         client_datasets = data_distributor.create_client_datasets()
@@ -24,3 +27,4 @@ class App:
     def run(self):
         self.learning_manager.run_learning_cycle()
         self.learning_manager.save_models()
+        self.config_manager.save_used_config()
