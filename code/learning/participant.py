@@ -1,13 +1,23 @@
+from __future__ import annotations
+
 from logging import info
 from typing import Union
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from tensorflow.keras.callbacks import History
 from numpy import array
 
 from learning.neural_network import NeuralNetworkModel
+from learning.models import SingleTestMetrics
 from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
 from generated_data.path import generated_data_path
+
+
+@dataclass
+class Participants:
+    server: Server
+    clients: list[Client]
 
 
 class LearningParticipant(ABC):
@@ -26,7 +36,7 @@ class LearningParticipant(ABC):
 
         return self.latest_learning_history
 
-    def test_model(self, dataset: CustomDataset) -> [float, float]:
+    def test_model(self, dataset: CustomDataset) -> SingleTestMetrics:
         return self.model.test(dataset)
 
     def get_model_weights(self) -> list[array]:

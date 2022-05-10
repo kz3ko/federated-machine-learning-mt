@@ -8,6 +8,7 @@ from tensorflow.keras.callbacks import History, EarlyStopping
 from numpy import array
 
 from data_provider.dataset import CustomDataset
+from learning.models import SingleTestMetrics
 
 
 class NeuralNetworkModel(ABC):
@@ -19,9 +20,11 @@ class NeuralNetworkModel(ABC):
         self.epochs = epochs
         self.base_model = self._create_base_model()
 
-    def test(self, dataset: CustomDataset) -> [float, float]:
+    def test(self, dataset: CustomDataset) -> SingleTestMetrics:
         loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
-        return loss, accuracy
+        metrics = SingleTestMetrics(accuracy, loss)
+
+        return metrics
 
     def get_weights(self) -> list[array]:
         return self.base_model.get_weights()

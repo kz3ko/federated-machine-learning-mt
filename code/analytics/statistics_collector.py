@@ -1,28 +1,19 @@
-from tensorflow.keras.callbacks import History
-
-from learning.participant import Client
+from analytics.models import ClientMetrics, ServerMetrics
+from learning.participant import Participants, Client
+from learning.models import SingleTestMetrics
 
 
 class StatisticsCollector:
 
-    def __init__(self, clients: list[Client]):
-        self.client_metrics = {}
-        self.server_metrics = {}
+    def __init__(self, participants: Participants):
+        self.clients_metrics = {client.id: ClientMetrics() for client in participants.clients}
+        self.server_metrics = ServerMetrics()
 
     def save_client_metrics(self, iteration: int, client: Client):
-        new_metrics = self.__get_history_metrics(client.latest_learning_history)
-        client_metrics = self.client_metrics.setdefault(client.id, {})
-        client_metrics[iteration] = {}
-        for name, value in new_metrics:
-            client_metrics.setdefault(name, []).append(value)
+        client_metrics = self.clients_metrics[client.id]
+        for metric, value in client.latest_learning_history.history.items():
+            [client_metrics.__getattribute__(metric)[iteration]] = value
 
-
-
-    @staticmethod
-    def __get_history_metrics(history: History) -> dict[str, float]:
-        return {
-            'accuracy': history.history['accuracy'],
-            'validation_accuracy': history.history['val_accuracy'],
-            'loss': history.history['loss'],
-            'validation_loss': history.history['val_loss']
-        }
+    def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
+        for metric, value in single_test_metrics.__dict__.items():
+            self.server_metrics.__getattribute__(metric)[iteration] = value

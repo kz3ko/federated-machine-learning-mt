@@ -3,7 +3,7 @@ from data_provider.distributor import DataDistributor
 from learning.manager import FederatedLearningManager
 from learning.participant_creator import ParticipantCreator
 from learning.neural_network import FirstNeuralNetworkModel
-from analytics.statistics_collector import StatisticsCollector
+from analytics.manager import AnalyticsManager
 
 
 class App:
@@ -15,14 +15,12 @@ class App:
 
         model_class = FirstNeuralNetworkModel
         participant_creator = ParticipantCreator(config.learning, test_dataset, client_datasets, model_class)
-        self.server = participant_creator.create_server()
-        self.clients = participant_creator.create_clients()
+        participants = participant_creator.create_participants()
 
-        self.statistics_collector = StatisticsCollector(self.clients)
-        self.learning_manager = FederatedLearningManager(config.learning, test_dataset, self.clients, self.server)
+        self.analytics_manager = AnalyticsManager(participants)
+        self.learning_manager = FederatedLearningManager(config.learning, test_dataset, participants,
+                                                         self.analytics_manager)
 
     def run(self):
         self.learning_manager.run_learning_cycle()
-        self.server.save_model()
-        for client in self.clients:
-            client.save_model()
+        self.learning_manager.save_models()
