@@ -15,4 +15,4 @@ class AnalyticsManager:
         return self.statistics_collector.gather_server_metrics(iteration, single_test_metrics)
 
     def save_collected_metrics_to_files(self):
-        self.statistics_collector.save_collected_metrics_to_files()
+        return self.statistics_collector.save_collected_metrics_to_files()

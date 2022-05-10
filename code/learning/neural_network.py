@@ -16,8 +16,7 @@ class NeuralNetworkModel(ABC):
     history: History
     batch_size: int
 
-    def __init__(self, epochs: int):
-        self.epochs = epochs
+    def __init__(self):
         self.base_model = self._create_base_model()
 
     def test(self, dataset: CustomDataset) -> SingleTestMetrics:
@@ -50,8 +49,8 @@ class NeuralNetworkModel(ABC):
 
 class FirstNeuralNetworkModel(NeuralNetworkModel):
 
-    def __init__(self, epochs: int):
-        super().__init__(epochs)
+    def __init__(self):
+        super().__init__()
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
@@ -61,7 +60,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
             dataset.input_values,
             dataset.target_labels,
             batch_size=self.batch_size,
-            epochs=self.epochs,
+            epochs=1,
             verbose=self.verbosity,
             validation_split=self.validation_split,
             shuffle=True

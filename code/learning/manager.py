@@ -8,7 +8,7 @@ from data_provider.dataset import TestDataset
 from analytics.manager import AnalyticsManager
 
 
-class FederatedLearningManager:
+class LearningManager:
 
     def __init__(self, config: LearningConfig, test_dataset: TestDataset, participants: Participants,
                  analytics_manager: AnalyticsManager):
@@ -26,6 +26,9 @@ class FederatedLearningManager:
                 client.set_model_weights(global_weights)
                 client.train_model()
                 self.analytics_manager.save_client_metrics(iteration, client)
+
+            if iteration % self.iterations_to_aggregate != 0:
+                continue
 
             averaged_weights = self.__get_clients_models_averaged_weights()
             self.server.set_model_weights(averaged_weights)
