@@ -12,7 +12,7 @@ class GeneratedDataPath:
     metrics: str = field(init=False)
 
     def __new__(cls, *args, **kwargs):
-        cls.timestamp = datetime.now().strftime('%H%M%s_%d%m%Y') if not cls.timestamp else cls.timestamp
+        cls.timestamp = datetime.now().strftime('%H_%M_%s__%d_%m_%Y') if not cls.timestamp else cls.timestamp
         return super(GeneratedDataPath, cls).__new__(cls, *args, **kwargs)
 
     def __post_init__(self):
