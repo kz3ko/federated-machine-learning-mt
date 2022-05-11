@@ -16,12 +16,14 @@ class MetricsCollector:
 
     def save_client_metrics(self, iteration: int, client: Client):
         client_metrics = self.clients_metrics[client.id]
+        client_metrics.iterations.append(iteration)
         for metric, value in client.latest_learning_history.history.items():
-            [client_metrics.__getattribute__(metric)[iteration]] = value
+            client_metrics.__getattribute__(metric).append(value)
 
-    def gather_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
+    def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
+        self.server_metrics.iterations.append(iteration)
         for metric, value in single_test_metrics.__dict__.items():
-            self.server_metrics.__getattribute__(metric)[iteration] = value
+            self.server_metrics.__getattribute__(metric).append(value)
 
     def save_collected_metrics_to_files(self):
         metrics_path = generated_data_path.metrics
