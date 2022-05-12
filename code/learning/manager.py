@@ -1,7 +1,7 @@
 from logging import info
 
 from learning.participant import Participants
-from learning.federated_averager import FederatedAveraging
+from learning.federated_averaging import FederatedAveraging
 from config.config import LearningConfig
 from data_provider.dataset import TestDataset
 from analytics.manager import AnalyticsManager
