@@ -25,6 +25,7 @@ class App:
 
     def run(self):
         self.learning_manager.run_learning_cycle()
+        self.learning_manager.make_predictions()
         self.learning_manager.save_models()
 
         self.analytics_manager.create_plots()

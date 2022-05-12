@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
 from matplotlib.pyplot import figure, Figure, Axes
+from sklearn.metrics import confusion_matrix
+from seaborn import heatmap
 
 from analytics.metrics_collector import MetricsCollector
 from analytics.models import ClientMetrics
@@ -123,7 +125,7 @@ class ServerTestingPlotter(Plotter):
         accuracy_line = axis.plot(self.server_metrics.iterations, self.server_metrics.accuracy,
                                   label='Funkcja dokładności')
         loss_line = axis.plot(self.server_metrics.iterations, self.server_metrics.loss, label='Funkcja strat')
-        axis.set_title(f' Wykres dokładności (ang. accuracy) oraz strat (ang. loss) \ndla modelu globalnego')
+        axis.set_title(f'Wykres dokładności (ang. accuracy) oraz strat (ang. loss) \ndla modelu globalnego')
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Wartość')
         axis.grid(True)
@@ -138,4 +140,23 @@ class ConfusionMatrixMaker(Plotter):
         self.target_directory = f'{generated_data_path.plots}/confusion_matrixes'
 
     def create_plots(self):
-        print('Creating server confusion matrixes...')
+        for participant, predictions in self.metrics_collector.predictions.items():
+            classes = participant.dataset_used_for_predictions.classes
+            number_of_classes = len(classes)
+
+            matrix = confusion_matrix(predictions.max_label, predictions.predicted_max_label)
+            self.figure_size = 2 * (2 * number_of_classes, )
+            figure_, axis = self._create_figure()
+
+            heat_map = heatmap(matrix, cmap='coolwarm', linecolor='white', linewidths=1, xticklabels=classes,
+                               yticklabels=classes, annot=True, fmt='d')
+            heat_map.set_ylim(0, len(matrix))
+
+            if participant.id == 'server':
+                axis.set_title(f'Macierz pomyłek dla modelu globalnego')
+            else:
+                axis.set_title(f'Macierz pomyłek dla klienta o identyfikatorze "{participant.id}"')
+            axis.set_xlabel('Klasa prawdziwa')
+            axis.set_ylabel('Klasa wyznaczona przez model')
+
+            self.plots[participant.full_name] = figure_

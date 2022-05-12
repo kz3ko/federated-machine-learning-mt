@@ -1,7 +1,7 @@
 from analytics.metrics_collector import MetricsCollector
 from analytics.plotter import ClientLearningPlotter, ServerTestingPlotter, ConfusionMatrixMaker
-from learning.participant import Participants, Client
-from learning.models import SingleTestMetrics
+from learning.participant import Participants, LearningParticipant, Client
+from learning.models import SingleTestMetrics, PredictionMetrics
 
 
 class AnalyticsManager:
@@ -22,6 +22,9 @@ class AnalyticsManager:
 
     def save_collected_metrics_to_files(self):
         return self.statistics_collector.save_collected_metrics_to_files()
+
+    def save_participant_predictions(self, participant: LearningParticipant, predictions: PredictionMetrics):
+        self.statistics_collector.save_participant_predictions(participant, predictions)
 
     def create_plots(self):
         for plotter in self.plotters:

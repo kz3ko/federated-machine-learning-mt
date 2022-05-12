@@ -5,10 +5,11 @@ from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import sparse_categorical_crossentropy
 from tensorflow.keras.callbacks import History, EarlyStopping
-from numpy import array
+from tensorflow.keras.utils import to_categorical
+from numpy import array, argmax
 
 from data_provider.dataset import CustomDataset
-from learning.models import SingleTestMetrics
+from learning.models import SingleTestMetrics, PredictionMetrics
 
 
 class NeuralNetworkModel(ABC):
@@ -22,6 +23,18 @@ class NeuralNetworkModel(ABC):
     def test(self, dataset: CustomDataset) -> SingleTestMetrics:
         loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
         metrics = SingleTestMetrics(accuracy, loss)
+
+        return metrics
+
+    def make_predictions(self, dataset: CustomDataset, batch_size: int = 128) -> PredictionMetrics:
+        labels = to_categorical(dataset.target_labels)
+        steps = int(len(dataset)/batch_size)
+        verbose = 1
+        predicted_labels = self.base_model.predict(dataset.input_values, verbose=verbose, steps=steps)
+        max_label = argmax(labels, axis=1)
+        predicted_max_label = argmax(predicted_labels, axis=1)
+
+        metrics = PredictionMetrics(labels, predicted_labels, max_label, predicted_max_label)
 
         return metrics
 

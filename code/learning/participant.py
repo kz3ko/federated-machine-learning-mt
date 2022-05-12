@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from logging import info
-from typing import Union
+from typing import Union, Iterator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import History
 from numpy import array
 
 from learning.neural_network import NeuralNetworkModel
-from learning.models import SingleTestMetrics
+from learning.models import SingleTestMetrics, PredictionMetrics
 from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
 from generated_data.path import generated_data_path
 
@@ -19,11 +19,17 @@ class Participants:
     server: Server
     clients: list[Client]
 
+    def __iter__(self) -> Iterator[LearningParticipant]:
+        for participant in [self.server, *self.clients]:
+            yield participant
+
 
 class LearningParticipant(ABC):
 
     id: Union[str, int]
     latest_learning_history: History
+    latest_predictions: PredictionMetrics
+    dataset_used_for_predictions: CustomDataset
 
     def __init__(self, dataset: CustomDataset, model: NeuralNetworkModel):
         self.dataset = dataset
@@ -38,6 +44,12 @@ class LearningParticipant(ABC):
 
     def test_model(self, dataset: CustomDataset) -> SingleTestMetrics:
         return self.model.test(dataset)
+
+    def make_predictions(self, dataset: CustomDataset) -> PredictionMetrics:
+        self.dataset_used_for_predictions = dataset
+        self.latest_predictions = self.model.make_predictions(self.dataset_used_for_predictions)
+
+        return self.latest_predictions
 
     def get_model_weights(self) -> list[array]:
         return self.model.get_weights()

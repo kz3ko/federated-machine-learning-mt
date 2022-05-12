@@ -14,8 +14,9 @@ class LearningManager:
         self.iterations = config.iterations
         self.iterations_to_aggregate = config.iterations_to_aggregate
         self.test_dataset = test_dataset
-        self.server = participants.server
-        self.clients = participants.clients
+        self.participants = participants
+        self.server = self.participants.server
+        self.clients = self.participants.clients
         self.analytics_manager = analytics_manager
         self.federated_averaging = FederatedAveraging(self.clients)
 
@@ -38,6 +39,11 @@ class LearningManager:
 
         self.analytics_manager.save_collected_metrics_to_files()
 
+    def make_predictions(self):
+        for participant in self.participants:
+            predictions = participant.make_predictions(self.test_dataset)
+            self.analytics_manager.save_participant_predictions(participant, predictions)
+
     def save_models(self):
-        for participant in [*self.clients, self.server]:
+        for participant in self.participants:
             participant.save_model()
