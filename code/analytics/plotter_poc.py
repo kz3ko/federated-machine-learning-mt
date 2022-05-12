@@ -31,18 +31,6 @@ def plot_client_data_distribution(dataset: CustomDataset):
     plt.show()
 
 
-def get_metrics(history):
-    """
-    Returns metrics of training history.
-    """
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-
-    return acc, val_acc, loss, val_loss
-
-
 def plot_accuracy_comparison(acc, val_acc):
     """
     Plots accuracy comparison between two given.
