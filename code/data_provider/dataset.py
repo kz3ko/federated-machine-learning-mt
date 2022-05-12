@@ -22,6 +22,7 @@ class CustomDataset(ABC):
         self.number_of_samples_per_class = self.__count_samples_per_class(self.samples)
         self.input_shape = self.__get_input_shape(self.samples)
         self.input_values, self.target_labels = self.__get_model_inputs(self.samples)
+        self.classes = self.__get_classes_names(list(self.number_of_samples_per_class.keys()))
 
     def __getitem__(self, key: int) -> Union[Sample, list[Sample]]:
         if isinstance(key, int):
@@ -87,6 +88,10 @@ class CustomDataset(ABC):
         ]
 
         return array(values), array(labels)
+
+    @staticmethod
+    def __get_classes_names(class_labels: list[ClassLabel]) -> list[str]:
+        return [class_label.name for class_label in class_labels]
 
 
 class ClassDataset(CustomDataset):
