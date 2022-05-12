@@ -32,6 +32,3 @@ class Config:
         main_config = get_data_from_json(ConfigPath.MAIN_CONFIG.value)
         self.data_distribution = DataDistributionConfig(**main_config['data_distribution'])
         self.learning = LearningConfig(**main_config['learning'])
-
-
-config = Config()

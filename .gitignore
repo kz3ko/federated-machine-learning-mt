@@ -143,3 +143,7 @@ cython_debug/
 
 # Keras models
 *.h5
+
+# Generated data
+generated_data/
+!generated_data/*.py
