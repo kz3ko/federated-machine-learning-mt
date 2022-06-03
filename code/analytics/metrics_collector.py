@@ -18,8 +18,8 @@ class MetricsCollector:
     def save_client_metrics(self, iteration: int, client: Client):
         client_metrics = self.clients_metrics[client.id]
         client_metrics.iterations.append(iteration)
-        for metric, value in client.latest_learning_history.history.items():
-            client_metrics.__getattribute__(metric).append(value)
+        for metric, values in client.latest_learning_history.history.items():
+            client_metrics.__getattribute__(metric).extend(values)
 
     def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
         self.server_metrics.iterations.append(iteration)

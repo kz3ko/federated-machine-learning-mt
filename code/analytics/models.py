@@ -23,8 +23,8 @@ class ParticipantMetrics(ABC):
 
 @dataclass
 class ClientMetrics(ParticipantMetrics):
-    val_accuracy: dict[int, float] = field(default_factory=lambda: [])
-    val_loss: dict[int, float] = field(default_factory=lambda: [])
+    val_accuracy: list[float] = field(default_factory=lambda: [])
+    val_loss: list[float] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         self.full_name = f'client_{self.id}'

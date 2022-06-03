@@ -7,8 +7,8 @@
     "main_class_ownership_per_client_ratio": 0.6
   },
   "learning": {
-    "iterations": 50,
+    "iterations": 2,
     "iterations_to_aggregate": 1,
-    "minimum_weight_difference_to_send": 1
+    "minimum_weight_difference_to_send": 0
   }
 }

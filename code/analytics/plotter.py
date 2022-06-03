@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 from matplotlib.pyplot import figure, Figure, Axes
 from sklearn.metrics import confusion_matrix
-from seaborn import heatmap
+from seaborn import heatmap, set
+from numpy import asarray, sum
 
 from analytics.metrics_collector import MetricsCollector
 from analytics.models import ClientMetrics
@@ -137,6 +138,7 @@ class ConfusionMatrixMaker(Plotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
         super(ConfusionMatrixMaker, self).__init__(metrics_collector)
+        self.figure_size = (6, 6)
         self.target_directory = f'{generated_data_path.plots}/confusion_matrixes'
 
     def create_plots(self):
@@ -148,15 +150,29 @@ class ConfusionMatrixMaker(Plotter):
             self.figure_size = 2 * (2 * number_of_classes, )
             figure_, axis = self._create_figure()
 
-            heat_map = heatmap(matrix, cmap='coolwarm', linecolor='white', linewidths=1, xticklabels=classes,
-                               yticklabels=classes, annot=True, fmt='d')
-            heat_map.set_ylim(0, len(matrix))
+            box_labels = self.__get_box_labels(matrix, number_of_classes)
+
+            set(font_scale=2.2)
+            heatmap(matrix, cmap='Blues', linecolor='black', linewidths=1, xticklabels=classes, yticklabels=classes,
+                    annot=box_labels, fmt='', cbar=False)
 
             if participant.id == 'server':
                 axis.set_title(f'Macierz pomyłek dla modelu globalnego')
             else:
                 axis.set_title(f'Macierz pomyłek dla klienta o identyfikatorze "{participant.id}"')
+
             axis.set_xlabel('Klasa prawdziwa')
             axis.set_ylabel('Klasa wyznaczona przez model')
 
             self.plots[participant.full_name] = figure_
+
+    def __get_box_labels(self, matrix, number_of_classes):
+        matrix_flatten = matrix.flatten()
+        label_all_percentage = [f'{value:.2%}' for value in matrix_flatten / sum(matrix)]
+        label_class_percentage = [
+            f'{value / sum(matrix[i % number_of_classes, :]):.2%}' for i, value in enumerate(matrix_flatten)
+        ]
+        box_labels = [f'{number}\n{all_percentage}\n{class_percentage}' for number, all_percentage, class_percentage
+                      in zip(matrix_flatten, label_all_percentage, label_class_percentage)]
+        return asarray(box_labels).reshape(matrix.shape)
+
