@@ -4,9 +4,10 @@ from logging import info
 from typing import Union, Iterator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from copy import deepcopy
 
 from tensorflow.keras.callbacks import History
-from numpy import array
+from numpy import array, product, asarray
 
 from learning.neural_network import NeuralNetworkModel
 from learning.models import SingleTestMetrics, PredictionMetrics
@@ -36,7 +37,7 @@ class LearningParticipant(ABC):
         self.model = model
         self.full_name = self._get_participant_full_name()
 
-    def train_model(self):
+    def train_model(self) -> History:
         info(f'Training model for participant with id "{self.id}".')
         self.latest_learning_history = self.model.train(self.dataset)
 
@@ -51,7 +52,7 @@ class LearningParticipant(ABC):
 
         return self.latest_predictions
 
-    def get_model_weights(self) -> list[array]:
+    def get_all_model_weights(self) -> list[array]:
         return self.model.get_weights()
 
     def set_model_weights(self, new_weights: list[array]):
@@ -87,7 +88,49 @@ class Client(LearningParticipant):
 
     def __init__(self, client_id: int, dataset: ClientDataset, model: NeuralNetworkModel):
         self.id = client_id
+        self.current_model_weights = None
+        self.previous_model_weights = None
+        self.minimum_weight_difference_to_send = 0
         super().__init__(dataset, model)
+
+    def train_model(self) -> History:
+        self.previous_model_weights = self.current_model_weights
+        super().train_model()
+        self.current_model_weights = self.get_all_model_weights()
+
+        return self.latest_learning_history
+
+    def get_changed_model_weights(self) -> list[array]:
+        if not self.minimum_weight_difference_to_send:
+            return self.current_model_weights
+
+        if not (self.previous_model_weights or self.current_model_weights):
+            return self.get_all_model_weights()
+        elif not self.previous_model_weights and self.current_model_weights:
+            return self.current_model_weights
+        else:
+            return self.__count_changed_model_weights()
 
     def _get_participant_full_name(self) -> str:
         return f'client_{self.id}'
+
+    def __count_changed_model_weights(self) -> list[array]:
+        changed_model_weights = deepcopy(self.current_model_weights)
+        layers_weights_iterator = enumerate(zip(self.previous_model_weights, self.current_model_weights))
+        for layer_idx, (previous_layer_weights, current_layer_weights) in layers_weights_iterator:
+            layer_shape = current_layer_weights.shape
+            flatten_shape = (product(layer_shape, ))
+            flattened_previous_layer_weights = previous_layer_weights.reshape(flatten_shape)
+            flattened_current_layer_weights = current_layer_weights.reshape(flatten_shape)
+            single_layer_weights_indexed_iterator = enumerate(zip(flattened_previous_layer_weights,
+                                                                  flattened_current_layer_weights))
+
+            for weight_idx, (previous_weight, current_weight) in single_layer_weights_indexed_iterator:
+                weight_difference = abs(current_weight - previous_weight)
+                if weight_difference > self.minimum_weight_difference_to_send:
+                    continue
+                flattened_current_layer_weights[weight_idx] = previous_weight
+
+            changed_model_weights[layer_idx] = flattened_current_layer_weights.reshape(layer_shape)
+
+        return changed_model_weights

@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from dataclasses import dataclass, field
 
 from utilities.utils import get_data_from_json
@@ -21,6 +22,7 @@ class DataDistributionConfig:
 class LearningConfig:
     iterations: int
     iterations_to_aggregate: int
+    minimum_weight_difference_to_send: Optional[float] = 0
 
 
 @dataclass

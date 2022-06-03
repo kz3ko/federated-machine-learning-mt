@@ -2,12 +2,13 @@
   "data_distribution": {
     "dataset_name": "cifar10",
     "test_data_ratio": 0.2,
-    "clients_number": 5,
-    "main_classes_per_client_number": 2,
+    "clients_number": 2,
+    "main_classes_per_client_number": 5,
     "main_class_ownership_per_client_ratio": 0.6
   },
   "learning": {
     "iterations": 50,
-    "iterations_to_aggregate": 1
+    "iterations_to_aggregate": 1,
+    "minimum_weight_difference_to_send": 1
   }
 }
