@@ -17,7 +17,8 @@ class App:
         client_datasets = data_distributor.create_client_datasets()
 
         model_class = FirstNeuralNetworkModel
-        participant_creator = ParticipantCreator(test_dataset, client_datasets, model_class)
+        participant_creator = ParticipantCreator(test_dataset, client_datasets, model_class,
+                                                 config.learning.minimum_weight_difference_to_send)
         participants = participant_creator.create_participants()
 
         self.analytics_manager = AnalyticsManager(participants)

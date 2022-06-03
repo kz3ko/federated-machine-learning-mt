@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from copy import deepcopy
 
 from tensorflow.keras.callbacks import History
-from numpy import array, product, asarray
+from numpy import array, product
 
 from learning.neural_network import NeuralNetworkModel
 from learning.models import SingleTestMetrics, PredictionMetrics
@@ -86,11 +86,12 @@ class Server(LearningParticipant):
 
 class Client(LearningParticipant):
 
-    def __init__(self, client_id: int, dataset: ClientDataset, model: NeuralNetworkModel):
+    def __init__(self, client_id: int, dataset: ClientDataset, model: NeuralNetworkModel,
+                 minimum_weight_difference_to_send: float):
         self.id = client_id
         self.current_model_weights = None
         self.previous_model_weights = None
-        self.minimum_weight_difference_to_send = 0
+        self.minimum_weight_difference_to_send = minimum_weight_difference_to_send
         super().__init__(dataset, model)
 
     def train_model(self) -> History:

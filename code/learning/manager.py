@@ -17,8 +17,6 @@ class LearningManager:
         self.participants = participants
         self.server = self.participants.server
         self.clients = self.participants.clients
-        for client in self.clients:
-            client.minimum_weight_difference_to_send = config.minimum_weight_difference_to_send
         self.analytics_manager = analytics_manager
         self.federated_averaging = FederatedAveraging(self.clients)
 
@@ -40,6 +38,7 @@ class LearningManager:
             info(f'Server metrics after {iteration} iteration: loss = {metrics.loss}; accuracy = {metrics.accuracy}')
             self.analytics_manager.save_server_metrics(iteration, metrics)
 
+        self.analytics_manager.prepare_best_metrics()
         self.analytics_manager.save_collected_metrics_to_files()
 
     def make_predictions(self):

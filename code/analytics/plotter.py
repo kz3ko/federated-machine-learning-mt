@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from matplotlib.pyplot import figure, Figure, Axes
 from sklearn.metrics import confusion_matrix
 from seaborn import heatmap, set
-from numpy import asarray, sum
+from numpy import asarray, sum, array
 
 from analytics.metrics_collector import MetricsCollector
 from analytics.models import ClientMetrics
@@ -147,10 +147,12 @@ class ConfusionMatrixMaker(Plotter):
             number_of_classes = len(classes)
 
             matrix = confusion_matrix(predictions.max_label, predictions.predicted_max_label)
+            print(type(matrix))
             self.figure_size = 2 * (2 * number_of_classes, )
             figure_, axis = self._create_figure()
 
             box_labels = self.__get_box_labels(matrix, number_of_classes)
+            print(type(box_labels))
 
             set(font_scale=2.2)
             heatmap(matrix, cmap='Blues', linecolor='black', linewidths=1, xticklabels=classes, yticklabels=classes,
@@ -166,7 +168,8 @@ class ConfusionMatrixMaker(Plotter):
 
             self.plots[participant.full_name] = figure_
 
-    def __get_box_labels(self, matrix, number_of_classes):
+    @staticmethod
+    def __get_box_labels(matrix: array, number_of_classes: int) -> array:
         matrix_flatten = matrix.flatten()
         label_all_percentage = [f'{value:.2%}' for value in matrix_flatten / sum(matrix)]
         label_class_percentage = [
@@ -174,5 +177,6 @@ class ConfusionMatrixMaker(Plotter):
         ]
         box_labels = [f'{number}\n{all_percentage}\n{class_percentage}' for number, all_percentage, class_percentage
                       in zip(matrix_flatten, label_all_percentage, label_class_percentage)]
+
         return asarray(box_labels).reshape(matrix.shape)
 

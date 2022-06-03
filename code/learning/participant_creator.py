@@ -7,11 +7,17 @@ from learning.participant import Participants, Server, Client
 
 class ParticipantCreator:
 
-    def __init__(self, test_dataset: TestDataset, client_datasets: dict[int, ClientDataset],
-                 model_class: Type[NeuralNetworkModel]):
+    def __init__(
+            self,
+            test_dataset: TestDataset,
+            client_datasets: dict[int, ClientDataset],
+            model_class: Type[NeuralNetworkModel],
+            minimum_weight_difference_to_send: float,
+    ):
         self.test_dataset = test_dataset
         self.client_datasets = client_datasets
         self.model_class = model_class
+        self.minimum_weight_difference_to_send = minimum_weight_difference_to_send
 
     def create_participants(self) -> Participants:
         server = self.__create_server()
@@ -30,7 +36,7 @@ class ParticipantCreator:
         clients = []
         for client_id, client_dataset in self.client_datasets.items():
             client_model = self.model_class()
-            client = Client(client_id, client_dataset, client_model)
+            client = Client(client_id, client_dataset, client_model, self.minimum_weight_difference_to_send)
             clients.append(client)
 
         return clients

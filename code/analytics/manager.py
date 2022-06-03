@@ -7,24 +7,27 @@ from learning.models import SingleTestMetrics, PredictionMetrics
 class AnalyticsManager:
 
     def __init__(self, participants: Participants):
-        self.statistics_collector = MetricsCollector(participants)
+        self.metrics_collector = MetricsCollector(participants)
         self.plotters = [
-            ClientLearningPlotter(self.statistics_collector),
-            ServerTestingPlotter(self.statistics_collector),
-            ConfusionMatrixMaker(self.statistics_collector)
+            ClientLearningPlotter(self.metrics_collector),
+            ServerTestingPlotter(self.metrics_collector),
+            ConfusionMatrixMaker(self.metrics_collector)
         ]
 
     def save_client_metrics(self, iteration: int, client: Client):
-        return self.statistics_collector.save_client_metrics(iteration, client)
+        return self.metrics_collector.save_client_metrics(iteration, client)
 
     def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
-        return self.statistics_collector.save_server_metrics(iteration, single_test_metrics)
+        return self.metrics_collector.save_server_metrics(iteration, single_test_metrics)
 
     def save_collected_metrics_to_files(self):
-        return self.statistics_collector.save_collected_metrics_to_files()
+        return self.metrics_collector.save_collected_metrics_to_files()
+
+    def prepare_best_metrics(self):
+        return self.metrics_collector.prepare_best_metrics()
 
     def save_participant_predictions(self, participant: LearningParticipant, predictions: PredictionMetrics):
-        self.statistics_collector.save_participant_predictions(participant, predictions)
+        self.metrics_collector.save_participant_predictions(participant, predictions)
 
     def create_plots(self):
         for plotter in self.plotters:
