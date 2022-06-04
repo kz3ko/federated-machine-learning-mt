@@ -2,7 +2,9 @@ from config.manager import ConfigManager
 from data_provider.distributor import DataDistributor
 from learning.manager import FederatedLearningManager, TraditionalLearningManager
 from learning.participant_creator import ParticipantCreator
-from learning.neural_network import FirstNeuralNetworkModel
+from learning.types import LearningType
+from learning.neural_network import FirstNeuralNetworkModel, SecondNeuralNetworkModel, ThirdNeuralNetworkModel, \
+    FourthNeuralNetworkModel
 from analytics.manager import AnalyticsManager
 
 
@@ -16,9 +18,9 @@ class App:
         self.learning_type = self.config.learning_type
 
     def run(self):
-        if self.learning_type == 'federated':
+        if self.learning_type == LearningType.FEDERATED:
             self.__prepare_managers_for_federated_learning()
-        elif self.learning_type == 'traditional':
+        elif self.learning_type == LearningType.TRADITIONAL:
             self.__prepare_managers_for_traditional_learning()
 
         self.learning_manager.run_learning_cycle()

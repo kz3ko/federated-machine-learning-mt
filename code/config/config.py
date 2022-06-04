@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Any
 from dataclasses import dataclass, field
 
 from utilities.utils import get_data_from_json
+from learning.types import LearningType
 
 
 class ConfigPath(Enum):
@@ -48,6 +51,7 @@ class EarlyStoppingConfig:
     patience: int
     metric_type: str
     available_metrics: list[str] = field(repr=False)
+    restore_best_weights: bool = False
 
     def __post_init__(self):
         self.__validate_metric_used()
@@ -101,6 +105,7 @@ class TraditionalLearningConfig:
 
 @dataclass
 class Config:
+    learning_type: LearningType = field(init=False)
     dataset: DatasetConfig = field(init=False)
     federated_learning: FederatedLearningConfig = field(init=False)
     traditional_learning: TraditionalLearningConfig = field(init=False)
@@ -114,11 +119,13 @@ class Config:
 
     @staticmethod
     def __get_learning_type(main_config: dict[Any, Any]):
-        available_learning_types = ['federated', 'traditional']
-        learning_type = main_config['learning_type'].lower()
-        if learning_type not in available_learning_types:
+        provided_learning_type = main_config['learning_type']
+        available_learning_types = [learning_type.value for learning_type in LearningType]
+        try:
+            learning_type = LearningType[provided_learning_type.upper()]
+        except KeyError:
             available_learning_types_string = '", "'.join(available_learning_types)
-            raise ValueError(f'Provided "{learning_type}" which is inccorrect, available learning types: '
+            raise ValueError(f'Provided "{provided_learning_type}" which is incorrect, available learning types: '
                              f'"{available_learning_types_string}".')
 
         return learning_type
