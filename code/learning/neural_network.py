@@ -19,6 +19,7 @@ class NeuralNetworkModel(ABC):
 
     def __init__(self):
         self.base_model = self._create_base_model()
+        self.epochs = 1
 
     def test(self, dataset: CustomDataset) -> SingleTestMetrics:
         loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
@@ -67,16 +68,18 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
+        self.callbacks = []
 
     def train(self, dataset: CustomDataset) -> History:
         self.history = self.base_model.fit(
             dataset.input_values,
             dataset.target_labels,
             batch_size=self.batch_size,
-            epochs=1,
+            epochs=self.epochs,
             verbose=self.verbosity,
             validation_split=self.validation_split,
-            shuffle=True
+            shuffle=True,
+            callbacks=self.callbacks
         )
 
         return self.history

@@ -91,7 +91,7 @@ class ClientLearningPlotter(Plotter):
         for client_id, client_metrics in self.metrics_collector.clients_metrics.items():
             accuracy_lines.append(axis.plot(client_metrics.iterations, client_metrics.val_accuracy,
                                             label=f'Model klienta o id "{client_id}"'))
-        axis.set_title(f'Wykres dokładności (ang. accuracy) procesu uczenia modelu dla wszystkich klientów.')
+        axis.set_title(f'Wykres dokładności (ang. accuracy) procesu uczenia modelu dla \nwszystkich klientów.')
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Dokładność modelu')
         axis.grid(True)
@@ -105,7 +105,7 @@ class ClientLearningPlotter(Plotter):
         for client_id, client_metrics in self.metrics_collector.clients_metrics.items():
             loss_lines.append(axis.plot(client_metrics.iterations, client_metrics.val_loss,
                                             label=f'Model klienta o id "{client_id}"'))
-        axis.set_title(f'Wykres strat (ang. loss) procesu uczenia modelu dla wszystkich klientów.')
+        axis.set_title(f'Wykres strat (ang. loss) procesu uczenia modelu dla \nwszystkich klientów.')
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Straty modelu')
         axis.grid(True)

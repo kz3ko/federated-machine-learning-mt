@@ -1,14 +1,16 @@
 from logging import info
 
+from keras.callbacks import EarlyStopping
+
 from learning.participant import Participants
-from config.config import LearningConfig
+from config.config import FederatedLearningConfig
 from data_provider.dataset import TestDataset
 from analytics.manager import AnalyticsManager
 
 
 class LearningManager:
 
-    def __init__(self, config: LearningConfig, test_dataset: TestDataset, participants: Participants,
+    def __init__(self, config: FederatedLearningConfig, test_dataset: TestDataset, participants: Participants,
                  analytics_manager: AnalyticsManager):
         self.iterations = config.cycle.iterations
         self.iterations_to_aggregate = config.cycle.iterations_to_aggregate
@@ -18,7 +20,7 @@ class LearningManager:
         self.clients = self.participants.clients
         self.analytics_manager = analytics_manager
 
-    def run_learning_cycle(self):
+    def run_federated_learning_cycle(self):
         for iteration in range(1, self.iterations + 1):
             global_weights = self.server.get_all_model_weights()
             for client in self.clients:
@@ -37,6 +39,13 @@ class LearningManager:
 
             if not self.server.learning_enabled:
                 break
+
+    def run_traditional_learning_cycle(self):
+        client = self.clients[0]
+        client.model.epochs = 2
+        client.model.callbacks = [EarlyStopping(patience=3, monitor='val_loss')]
+        client.train_model()
+        self.analytics_manager.save_traditional_learning_metrics(client)
 
     def make_predictions(self):
         for participant in self.participants:

@@ -20,6 +20,9 @@ class AnalyticsManager:
     def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
         return self.metrics_collector.save_server_metrics(iteration, single_test_metrics)
 
+    def save_traditional_learning_metrics(self, client):
+        return self.metrics_collector.save_traditional_learning_metrics(client)
+
     def save_collected_metrics_to_files(self):
         return self.metrics_collector.save_collected_metrics_to_files()
 

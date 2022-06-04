@@ -1,24 +1,23 @@
 from tensorflow.python.framework.ops import EagerTensor
 
-from data_provider.loader import load_dataset
+from config.config import DatasetConfig, DataDistributionConfig
+from data_provider.loader import DatasetLoader
 from data_provider.models import ClassLabel, Sample
 from data_provider.dataset import ClassDataset, ClientDataset, TestDataset
 from data_provider.class_labels import DatasetClassLabels
 from data_provider.normalizer import Normalizer
-from config.config import DataDistributionConfig
 
 
 class DataDistributor:
 
-    def __init__(self, config: DataDistributionConfig):
-        self.dataset_name = config.dataset_name
-        self.test_data_ratio = config.test_data_ratio
-        self.clients_number = config.clients_number
-        self.main_classes_per_client_number = config.main_classes_per_client_number
+    def __init__(self, dataset_config: DatasetConfig, data_distribution_config: DataDistributionConfig):
+        dataset_loader = DatasetLoader(dataset_config)
+        self.test_data_ratio = dataset_config.test_data_ratio
+        self.clients_number = data_distribution_config.clients_number
+        self.main_classes_per_client_number = data_distribution_config.main_classes_per_client_number
         self.normalizer = Normalizer()
-        self.main_class_ownership_per_client_ratio = config.main_class_ownership_per_client_ratio
-        self.dataset, self.dataset_info = load_dataset(self.dataset_name, split='all', with_info=True,
-                                                       as_supervised=True)
+        self.main_class_ownership_per_client_ratio = data_distribution_config.main_class_ownership_per_client_ratio
+        self.dataset, self.dataset_info = dataset_loader.load_dataset(split='all', with_info=True, as_supervised=True)
         self.dataset_class_labels = DatasetClassLabels(self.dataset_info)
         self.class_datasets = self.__create_class_datasets()
 

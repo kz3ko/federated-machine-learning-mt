@@ -27,6 +27,13 @@ class MetricsCollector:
         for metric, value in single_test_metrics.__dict__.items():
             self.server_metrics.__getattribute__(metric).append(value)
 
+    def save_traditional_learning_metrics(self, client: Client):
+        client_metrics = self.clients_metrics[client.id]
+        for metric, values in client.latest_learning_history.history.items():
+            if not client_metrics.iterations:
+                client_metrics.iterations = [iteration for iteration in range(len(values))]
+            client_metrics.__getattribute__(metric).extend(values)
+
     def prepare_best_metrics(self):
         for metrics in self.participants_metrics:
             max_accuracy = max(metrics.accuracy)

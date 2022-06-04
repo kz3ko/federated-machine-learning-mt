@@ -10,9 +10,13 @@ class ConfigPath(Enum):
 
 
 @dataclass
-class DataDistributionConfig:
-    dataset_name: str
+class DatasetConfig:
+    name: str
     test_data_ratio: float
+
+
+@dataclass
+class DataDistributionConfig:
     clients_number: int
     main_classes_per_client_number: int
     main_class_ownership_per_client_ratio: float
@@ -68,23 +72,53 @@ class ServerLearningConfig:
 
 
 @dataclass
-class LearningConfig:
+class FederatedLearningConfig:
+    data_distribution: DataDistributionConfig = field(init=False)
     cycle: LearningCycleConfig = field(init=False)
     client: ClientLearningConfig = field(init=False)
     server: ServerLearningConfig = field(init=False)
 
-    def __init__(self, learning_config_json: dict[Any]):
-        self.cycle = LearningCycleConfig(**learning_config_json['cycle'])
-        self.client = ClientLearningConfig(learning_config_json['client'])
-        self.server = ServerLearningConfig(learning_config_json['server'])
+    def __init__(self, federated_learning_config_json: dict[Any]):
+        self.data_distribution = DataDistributionConfig(**federated_learning_config_json['data_distribution'])
+        self.cycle = LearningCycleConfig(**federated_learning_config_json['cycle'])
+        self.client = ClientLearningConfig(federated_learning_config_json['client'])
+        self.server = ServerLearningConfig(federated_learning_config_json['server'])
+
+
+@dataclass
+class TraditionalLearningConfig:
+    epochs: int
+    early_stopping: EarlyStoppingConfig
+
+    def __init__(self, traditional_learning_config_json: dict[Any]):
+        self.epochs = traditional_learning_config_json['epochs']
+        early_stopping_metrics = ['accuracy', 'loss', 'val_accuracy', 'val_loss']
+        self.early_stopping = EarlyStoppingConfig(
+            **traditional_learning_config_json['early_stopping'],
+            available_metrics=early_stopping_metrics
+        )
 
 
 @dataclass
 class Config:
-    data_distribution: DataDistributionConfig = field(init=False)
-    learning: LearningConfig = field(init=False)
+    dataset: DatasetConfig = field(init=False)
+    federated_learning: FederatedLearningConfig = field(init=False)
+    traditional_learning: TraditionalLearningConfig = field(init=False)
 
     def __post_init__(self):
         main_config = get_data_from_json(ConfigPath.MAIN_CONFIG.value)
-        self.data_distribution = DataDistributionConfig(**main_config['data_distribution'])
-        self.learning = LearningConfig(main_config['learning'])
+        self.learning_type = self.__get_learning_type(main_config)
+        self.dataset = DatasetConfig(**main_config['dataset'])
+        self.federated_learning = FederatedLearningConfig(main_config['federated_learning'])
+        self.traditional_learning = TraditionalLearningConfig(main_config['traditional_learning'])
+
+    @staticmethod
+    def __get_learning_type(main_config: dict[Any, Any]):
+        available_learning_types = ['federated', 'traditional']
+        learning_type = main_config['learning_type'].lower()
+        if learning_type not in available_learning_types:
+            available_learning_types_string = '", "'.join(available_learning_types)
+            raise ValueError(f'Provided "{learning_type}" which is inccorrect, available learning types: '
+                             f'"{available_learning_types_string}".')
+
+        return learning_type
