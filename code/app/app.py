@@ -9,14 +9,15 @@ from analytics.manager import AnalyticsManager
 class App:
 
     def __init__(self):
-        self.config_manager = ConfigManager()
+        model_class = FirstNeuralNetworkModel
+
+        self.config_manager = ConfigManager(model_class)
         config = self.config_manager.config
 
         data_distributor = DataDistributor(config.data_distribution)
         test_dataset = data_distributor.create_test_dataset()
         client_datasets = data_distributor.create_client_datasets()
 
-        model_class = FirstNeuralNetworkModel
         participant_creator = ParticipantCreator(test_dataset, client_datasets, model_class, config.learning.client,
                                                  config.learning.server)
         participants = participant_creator.create_participants()
