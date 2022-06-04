@@ -147,12 +147,10 @@ class ConfusionMatrixMaker(Plotter):
             number_of_classes = len(classes)
 
             matrix = confusion_matrix(predictions.max_label, predictions.predicted_max_label)
-            print(type(matrix))
             self.figure_size = 2 * (2 * number_of_classes, )
             figure_, axis = self._create_figure()
 
             box_labels = self.__get_box_labels(matrix, number_of_classes)
-            print(type(box_labels))
 
             set(font_scale=2.2)
             heatmap(matrix, cmap='Blues', linecolor='black', linewidths=1, xticklabels=classes, yticklabels=classes,

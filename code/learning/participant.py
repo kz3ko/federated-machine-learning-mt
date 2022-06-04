@@ -9,8 +9,11 @@ from copy import deepcopy
 from tensorflow.keras.callbacks import History
 from numpy import array, product
 
+from config.config import ClientLearningConfig, ServerLearningConfig
 from learning.neural_network import NeuralNetworkModel
 from learning.models import SingleTestMetrics, PredictionMetrics
+from learning.algorithms import EarlyStopping
+from learning.federated_averaging import count_clients_models_averaged_weights
 from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
 from generated_data.path import generated_data_path
 
@@ -27,12 +30,12 @@ class Participants:
 
 class LearningParticipant(ABC):
 
-    id: Union[str, int]
     latest_learning_history: History
     latest_predictions: PredictionMetrics
     dataset_used_for_predictions: CustomDataset
 
-    def __init__(self, dataset: CustomDataset, model: NeuralNetworkModel):
+    def __init__(self, id_: Union[str, int], dataset: CustomDataset, model: NeuralNetworkModel):
+        self.id = id_
         self.dataset = dataset
         self.model = model
         self.full_name = self._get_participant_full_name()
@@ -76,9 +79,27 @@ class LearningParticipant(ABC):
 
 class Server(LearningParticipant):
 
-    def __init__(self, dataset: TestDataset, model: NeuralNetworkModel):
-        self.id = 'server'
-        super().__init__(dataset, model)
+    def __init__(self, dataset: TestDataset, model: NeuralNetworkModel, learning_config: ServerLearningConfig):
+        super().__init__('server', dataset, model)
+        self.learning_config = learning_config
+        self.all_algorithms = [
+            EarlyStopping(self.learning_config.early_stopping),
+        ]
+        self.used_algorithms = [algorithm for algorithm in self.all_algorithms if algorithm.enabled]
+        self.learning_enabled = True
+
+    def train_model(self) -> SingleTestMetrics:
+        metrics = super().test_model(self.dataset)
+        for algorithm in self.used_algorithms:
+            algorithm.validate(metrics)
+            if self.learning_enabled and algorithm.triggered:
+                self.learning_enabled = False
+
+        return metrics
+
+    def update_global_weights(self, clients_models_weights: list[list[array]]):
+        averaged_weights = count_clients_models_averaged_weights(clients_models_weights)
+        self.set_model_weights(averaged_weights)
 
     def _get_participant_full_name(self) -> str:
         return self.id
@@ -87,12 +108,12 @@ class Server(LearningParticipant):
 class Client(LearningParticipant):
 
     def __init__(self, client_id: int, dataset: ClientDataset, model: NeuralNetworkModel,
-                 minimum_weight_difference_to_send: float):
-        self.id = client_id
+                 learning_config: ClientLearningConfig):
+        super().__init__(client_id, dataset, model)
+        self.learning_config = learning_config
+        self.minimum_weight_difference_to_send = self.__get_minimum_weight_difference_to_send()
         self.current_model_weights = None
         self.previous_model_weights = None
-        self.minimum_weight_difference_to_send = minimum_weight_difference_to_send
-        super().__init__(dataset, model)
 
     def train_model(self) -> History:
         self.previous_model_weights = self.current_model_weights
@@ -135,3 +156,9 @@ class Client(LearningParticipant):
             changed_model_weights[layer_idx] = flattened_current_layer_weights.reshape(layer_shape)
 
         return changed_model_weights
+
+    def __get_minimum_weight_difference_to_send(self) -> float:
+        if not self.learning_config.weights_sending.send_only_changed_weights:
+            return 0
+        return self.learning_config.weights_sending.minimum_weight_difference_to_send
+

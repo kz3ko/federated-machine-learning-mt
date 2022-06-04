@@ -20,7 +20,6 @@ class Metrics(ABC):
 
 @dataclass
 class ParticipantMetrics(Metrics, ABC):
-
     id: Union[str, int]
     full_name: str = field(init=False)
     iterations: list[int] = field(default_factory=lambda: [])
@@ -34,7 +33,6 @@ class ParticipantMetrics(Metrics, ABC):
 
 @dataclass
 class ClientMetrics(ParticipantMetrics):
-
     val_accuracy: list[float] = field(default_factory=lambda: [])
     val_loss: list[float] = field(default_factory=lambda: [])
 
@@ -53,7 +51,6 @@ class ServerMetrics(ParticipantMetrics):
 
 @dataclass
 class ParticipantBestMetrics(Metrics, ABC):
-
     name: str = field(repr=False)
     max_accuracy: float
     max_accuracy_iteration: int
@@ -69,7 +66,6 @@ class ParticipantBestMetrics(Metrics, ABC):
 
 @dataclass
 class ClientBestMetrics(ParticipantBestMetrics):
-
     max_val_accuracy: float
     max_val_accuracy_iteration: int
     min_val_loss: float
@@ -78,5 +74,4 @@ class ClientBestMetrics(ParticipantBestMetrics):
 
 @dataclass
 class ServerBestMetrics(ParticipantBestMetrics):
-
     pass

@@ -7,8 +7,22 @@
     "main_class_ownership_per_client_ratio": 0.6
   },
   "learning": {
-    "iterations": 2,
-    "iterations_to_aggregate": 1,
-    "minimum_weight_difference_to_send": 0
+    "cycle": {
+      "iterations": 5,
+      "iterations_to_aggregate": 1
+    },
+    "client": {
+      "weights_sending": {
+        "send_only_changed_weights": false,
+        "minimum_weight_difference_to_send": 1
+      }
+    },
+    "server": {
+      "early_stopping": {
+        "enabled": false,
+        "metric_type": "accuracy",
+        "patience": 2
+      }
+    }
   }
 }

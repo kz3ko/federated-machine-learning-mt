@@ -1,5 +1,6 @@
 from typing import Type
 
+from config.config import ClientLearningConfig, ServerLearningConfig
 from data_provider.dataset import TestDataset, ClientDataset
 from learning.neural_network import NeuralNetworkModel
 from learning.participant import Participants, Server, Client
@@ -12,12 +13,14 @@ class ParticipantCreator:
             test_dataset: TestDataset,
             client_datasets: dict[int, ClientDataset],
             model_class: Type[NeuralNetworkModel],
-            minimum_weight_difference_to_send: float,
+            client_learning_config: ClientLearningConfig,
+            server_learning_config: ServerLearningConfig,
     ):
         self.test_dataset = test_dataset
         self.client_datasets = client_datasets
         self.model_class = model_class
-        self.minimum_weight_difference_to_send = minimum_weight_difference_to_send
+        self.client_learning_config = client_learning_config
+        self.server_learning_config = server_learning_config
 
     def create_participants(self) -> Participants:
         server = self.__create_server()
@@ -28,7 +31,7 @@ class ParticipantCreator:
 
     def __create_server(self) -> Server:
         server_model = self.model_class()
-        server = Server(self.test_dataset, server_model)
+        server = Server(self.test_dataset, server_model, self.server_learning_config)
 
         return server
 
@@ -36,7 +39,7 @@ class ParticipantCreator:
         clients = []
         for client_id, client_dataset in self.client_datasets.items():
             client_model = self.model_class()
-            client = Client(client_id, client_dataset, client_model, self.minimum_weight_difference_to_send)
+            client = Client(client_id, client_dataset, client_model, self.client_learning_config)
             clients.append(client)
 
         return clients
