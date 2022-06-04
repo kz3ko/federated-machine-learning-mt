@@ -15,5 +15,5 @@ class ConfigManager:
 
     def save_used_config(self):
         target_path = generated_data_path.root
-        copied_config_path = f'{target_path}/config_used.{self.model_class_name}.json'
+        copied_config_path = f'{target_path}/config_used.{self.model_class_name}.{self.config.learning_type}.json'
         copy(self.config_path.value, copied_config_path)

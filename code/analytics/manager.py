@@ -1,6 +1,6 @@
 from analytics.metrics_collector import MetricsCollector
-from analytics.plotter import ClientLearningPlotter, ServerTestingPlotter, ConfusionMatrixMaker
-from learning.participant import Participants, LearningParticipant, Client
+from analytics.plotter_creator import PlotterCreator
+from learning.participant import Participants, LearningParticipant, Client, TraditionalParticipant
 from learning.models import SingleTestMetrics, PredictionMetrics
 
 
@@ -8,11 +8,8 @@ class AnalyticsManager:
 
     def __init__(self, participants: Participants):
         self.metrics_collector = MetricsCollector(participants)
-        self.plotters = [
-            ClientLearningPlotter(self.metrics_collector),
-            ServerTestingPlotter(self.metrics_collector),
-            ConfusionMatrixMaker(self.metrics_collector)
-        ]
+        self.plotters_creator = PlotterCreator(participants, self.metrics_collector)
+        self.plotters = self.plotters_creator.create_plotters()
 
     def save_client_metrics(self, iteration: int, client: Client):
         return self.metrics_collector.save_client_metrics(iteration, client)
@@ -20,8 +17,8 @@ class AnalyticsManager:
     def save_server_metrics(self, iteration: int, single_test_metrics: SingleTestMetrics):
         return self.metrics_collector.save_server_metrics(iteration, single_test_metrics)
 
-    def save_traditional_learning_metrics(self, client):
-        return self.metrics_collector.save_traditional_learning_metrics(client)
+    def save_traditional_learning_metrics(self, participant: TraditionalParticipant):
+        return self.metrics_collector.save_traditional_participant_metrics(participant)
 
     def save_collected_metrics_to_files(self):
         return self.metrics_collector.save_collected_metrics_to_files()

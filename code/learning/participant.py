@@ -1,30 +1,33 @@
 from __future__ import annotations
 
 from logging import info
-from typing import Union, Iterator
+from typing import Union, Iterator, Optional
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 
 from tensorflow.keras.callbacks import History
 from numpy import array, product
 
-from config.config import ClientLearningConfig, ServerLearningConfig
+from config.config import ClientLearningConfig, ServerLearningConfig, TraditionalLearningConfig
 from learning.neural_network import NeuralNetworkModel
 from learning.models import SingleTestMetrics, PredictionMetrics
 from learning.algorithms import EarlyStopping
 from learning.federated_averaging import count_clients_models_averaged_weights
-from data_provider.dataset import CustomDataset, ClientDataset, TestDataset
+from data_provider.dataset import CustomDataset, ClientDataset, TestDataset, TrainTraditionalDataset
 from generated_data.path import generated_data_path
 
 
 @dataclass
 class Participants:
-    server: Server
-    clients: list[Client]
+    server: Optional[Server] = None
+    clients: Optional[list[Client]] = field(default_factory=lambda: [])
+    traditional_participant: Optional[TraditionalParticipant] = None
 
     def __iter__(self) -> Iterator[LearningParticipant]:
-        for participant in [self.server, *self.clients]:
+        for participant in [self.traditional_participant, self.server, *self.clients]:
+            if not participant:
+                continue
             yield participant
 
 
@@ -161,4 +164,19 @@ class Client(LearningParticipant):
         if not self.learning_config.weights_sending.send_only_changed_weights:
             return 0
         return self.learning_config.weights_sending.minimum_weight_difference_to_send
+
+
+class TraditionalParticipant(LearningParticipant):
+
+    def __init__(
+            self,
+            dataset: TrainTraditionalDataset,
+            model: NeuralNetworkModel,
+            learning_config: TraditionalLearningConfig
+    ):
+        super().__init__('traditional_participant', dataset, model)
+        self.learning_config = learning_config
+
+    def _get_participant_full_name(self) -> str:
+        return self.id
 

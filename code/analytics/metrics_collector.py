@@ -1,7 +1,10 @@
+from typing import Union
+
 from pandas import DataFrame
 
-from analytics.models import Metrics, ClientMetrics, ServerMetrics, ClientBestMetrics, ServerBestMetrics
-from learning.participant import Participants, LearningParticipant, Client
+from analytics.models import Metrics, ClientMetrics, ServerMetrics, TraditionalParticipantMetrics, \
+    ParticipantBestMetrics, ClientBestMetrics, ServerBestMetrics, TraditionalParticipantBestMetrics
+from learning.participant import Participants, LearningParticipant, Client, TraditionalParticipant
 from learning.models import SingleTestMetrics, PredictionMetrics
 from generated_data.path import generated_data_path
 from utilities.utils import create_directory
@@ -11,8 +14,15 @@ class MetricsCollector:
 
     def __init__(self, participants: Participants):
         self.clients_metrics = {client.id: ClientMetrics(client.id) for client in participants.clients}
-        self.server_metrics = ServerMetrics('server')
-        self.participants_metrics = [self.server_metrics, *self.clients_metrics.values()]
+        self.server_metrics = ServerMetrics(participants.server.id) if participants.server else None
+        self.traditional_participant_metrics = TraditionalParticipantMetrics(participants.traditional_participant.id) \
+            if participants.traditional_participant else None
+        all_participants_metrics = [
+            self.traditional_participant_metrics,
+            self.server_metrics,
+            *self.clients_metrics.values()
+        ]
+        self.participants_metrics = [metrics for metrics in all_participants_metrics if metrics]
         self.best_metrics = []
         self.predictions = {}
 
@@ -27,30 +37,33 @@ class MetricsCollector:
         for metric, value in single_test_metrics.__dict__.items():
             self.server_metrics.__getattribute__(metric).append(value)
 
-    def save_traditional_learning_metrics(self, client: Client):
-        client_metrics = self.clients_metrics[client.id]
-        for metric, values in client.latest_learning_history.history.items():
-            if not client_metrics.iterations:
-                client_metrics.iterations = [iteration for iteration in range(len(values))]
-            client_metrics.__getattribute__(metric).extend(values)
+    def save_traditional_participant_metrics(self, participant: TraditionalParticipant):
+        for metric, values in participant.latest_learning_history.history.items():
+            if not self.traditional_participant_metrics.iterations:
+                self.traditional_participant_metrics.iterations = range(1, len(values) + 1)
+            self.traditional_participant_metrics.__getattribute__(metric).extend(values)
 
     def prepare_best_metrics(self):
+        single_best_metric = None
         for metrics in self.participants_metrics:
             max_accuracy = max(metrics.accuracy)
             max_accuracy_iteration = metrics.iterations[metrics.accuracy.index(max_accuracy)]
             min_loss = min(metrics.loss)
             min_loss_iteration = metrics.iterations[metrics.loss.index(min_loss)]
-            if isinstance(metrics, ClientMetrics):
+            metrics_data = [metrics.full_name, max_accuracy, max_accuracy_iteration, min_loss, min_loss_iteration]
+            try:
                 max_val_accuracy = max(metrics.val_accuracy)
                 max_val_accuracy_iteration = metrics.iterations[metrics.val_accuracy.index(max_val_accuracy)]
                 min_val_loss = min(metrics.val_loss)
                 min_val_loss_iteration = metrics.iterations[metrics.val_loss.index(min_val_loss)]
-                single_best_metric = ClientBestMetrics(metrics.full_name, max_accuracy, max_accuracy_iteration,
-                                                       min_loss, min_loss_iteration, max_val_accuracy,
-                                                       max_val_accuracy_iteration, min_val_loss, min_val_loss_iteration)
-            else:
-                single_best_metric = ServerBestMetrics(metrics.full_name, max_accuracy, max_accuracy_iteration,
-                                                       min_loss, min_loss_iteration)
+                metrics_data.extend([max_val_accuracy, max_val_accuracy_iteration, min_val_loss,
+                                     min_val_loss_iteration])
+                if isinstance(metrics, ClientMetrics):
+                    single_best_metric = ClientBestMetrics(*metrics_data)
+                elif isinstance(metrics, TraditionalParticipantMetrics):
+                    single_best_metric = TraditionalParticipantBestMetrics(*metrics_data)
+            except AttributeError:
+                single_best_metric = ServerBestMetrics(*metrics_data)
 
             self.best_metrics.append(single_best_metric)
 

@@ -3,7 +3,7 @@ from tensorflow.python.framework.ops import EagerTensor
 from config.config import DatasetConfig, DataDistributionConfig
 from data_provider.loader import DatasetLoader
 from data_provider.models import ClassLabel, Sample
-from data_provider.dataset import ClassDataset, ClientDataset, TestDataset
+from data_provider.dataset import ClassDataset, ClientDataset, TrainTraditionalDataset, TestDataset
 from data_provider.class_labels import DatasetClassLabels
 from data_provider.normalizer import Normalizer
 
@@ -26,6 +26,13 @@ class DataDistributor:
         client_datasets = self.__distribute_samples_between_client_datasets(main_classes_per_client)
 
         return client_datasets
+
+    def create_train_traditional_dataset(self) -> TrainTraditionalDataset:
+        train_samples = []
+        for class_dataset in self.class_datasets.values():
+            train_samples.extend(class_dataset.samples)
+
+        return TrainTraditionalDataset(train_samples)
 
     def create_test_dataset(self) -> TestDataset:
         if not self.test_data_ratio:

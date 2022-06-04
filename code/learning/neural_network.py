@@ -9,6 +9,7 @@ from tensorflow.keras.utils import to_categorical
 from numpy import array, argmax
 
 from data_provider.dataset import CustomDataset
+from config.config import EarlyStoppingConfig
 from learning.models import SingleTestMetrics, PredictionMetrics
 
 
@@ -20,6 +21,7 @@ class NeuralNetworkModel(ABC):
     def __init__(self):
         self.base_model = self._create_base_model()
         self.epochs = 1
+        self.callbacks = []
 
     def test(self, dataset: CustomDataset) -> SingleTestMetrics:
         loss, accuracy = self.base_model.evaluate(dataset.input_values, dataset.target_labels, self.batch_size)
@@ -51,6 +53,13 @@ class NeuralNetworkModel(ABC):
     def load(self, model_path):
         self.base_model = load_model(model_path)
 
+    def update_early_stopping(self, early_stopping_config: EarlyStoppingConfig):
+        early_stopping = EarlyStopping(
+            patience=early_stopping_config.patience,
+            monitor=early_stopping_config.metric_type,
+        )
+        self.callbacks.append(early_stopping)
+
     @abstractmethod
     def train(self, dataset: CustomDataset) -> History:
         pass
@@ -68,7 +77,6 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         self.batch_size = 256
         self.verbosity = 1
         self.validation_split = 0.2
-        self.callbacks = []
 
     def train(self, dataset: CustomDataset) -> History:
         self.history = self.base_model.fit(

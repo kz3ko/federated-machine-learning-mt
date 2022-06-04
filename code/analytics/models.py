@@ -50,6 +50,16 @@ class ServerMetrics(ParticipantMetrics):
 
 
 @dataclass
+class TraditionalParticipantMetrics(ParticipantMetrics):
+    val_accuracy: list[float] = field(default_factory=lambda: [])
+    val_loss: list[float] = field(default_factory=lambda: [])
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.full_name = self.id
+
+
+@dataclass
 class ParticipantBestMetrics(Metrics, ABC):
     name: str = field(repr=False)
     max_accuracy: float
@@ -75,3 +85,11 @@ class ClientBestMetrics(ParticipantBestMetrics):
 @dataclass
 class ServerBestMetrics(ParticipantBestMetrics):
     pass
+
+
+@dataclass
+class TraditionalParticipantBestMetrics(ParticipantBestMetrics):
+    max_val_accuracy: float
+    max_val_accuracy_iteration: int
+    min_val_loss: float
+    min_val_loss_iteration: int
