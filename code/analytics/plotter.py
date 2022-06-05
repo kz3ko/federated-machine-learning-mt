@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 
 from matplotlib.pyplot import figure, Figure, Axes
+from matplotlib.ticker import MaxNLocator
 from sklearn.metrics import confusion_matrix
 from seaborn import heatmap
+from numpy import asarray, sum, array
 
 from analytics.metrics_collector import MetricsCollector
-from analytics.models import ClientMetrics
+from analytics.models import ClientMetrics, TraditionalParticipantTrainingMetrics
 from generated_data.path import generated_data_path
+from learning.participant import Client, Server
 from utilities.utils import create_directory
 
 
@@ -38,10 +41,24 @@ class Plotter(ABC):
         pass
 
 
-class ClientLearningPlotter(Plotter):
+class LinePlotter(Plotter, ABC):
+
+    def _create_figure(self) -> tuple[Figure, Axes]:
+        figure_, axis = super()._create_figure()
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        return figure_, axis
+
+
+    @abstractmethod
+    def create_plots(self):
+        pass
+
+
+class ClientLearningPlotter(LinePlotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
-        super(ClientLearningPlotter, self).__init__(metrics_collector)
+        super().__init__(metrics_collector)
         self.target_directory = f'{generated_data_path.plots}/learning_plots'
 
     def create_plots(self):
@@ -67,7 +84,7 @@ class ClientLearningPlotter(Plotter):
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Dokładność modelu')
         axis.grid(True)
-        axis.legend(handles=[*accuracy_line, *val_accuracy_line], loc='upper right')
+        axis.legend(handles=[*accuracy_line, *val_accuracy_line], loc='upper left')
 
         return figure_
 
@@ -78,7 +95,7 @@ class ClientLearningPlotter(Plotter):
         axis.set_title(f'Wykres strat (ang. loss) procesu uczenia modelu dla klienta \n'
                        f'o identyfikatorze "{client_id}"')
         axis.set_xlabel('Iteracje')
-        axis.set_ylabel('Straty modelu')
+        axis.set_ylabel('Wartosc funkcji strat')
         axis.grid(True)
         axis.legend(handles=[*loss_line, *val_loss_line], loc='upper right')
 
@@ -90,11 +107,11 @@ class ClientLearningPlotter(Plotter):
         for client_id, client_metrics in self.metrics_collector.clients_metrics.items():
             accuracy_lines.append(axis.plot(client_metrics.iterations, client_metrics.val_accuracy,
                                             label=f'Model klienta o id "{client_id}"'))
-        axis.set_title(f'Wykres dokładności (ang. accuracy) procesu uczenia modelu dla wszystkich klientów.')
+        axis.set_title(f'Wykres dokładności (ang. accuracy) procesu uczenia modelu dla \nwszystkich klientów.')
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Dokładność modelu')
         axis.grid(True)
-        axis.legend(handles=[line[0] for line in accuracy_lines], loc='upper right')
+        axis.legend(handles=[line[0] for line in accuracy_lines], loc='upper left')
 
         return figure_
 
@@ -103,17 +120,56 @@ class ClientLearningPlotter(Plotter):
         loss_lines = []
         for client_id, client_metrics in self.metrics_collector.clients_metrics.items():
             loss_lines.append(axis.plot(client_metrics.iterations, client_metrics.val_loss,
-                                            label=f'Model klienta o id "{client_id}"'))
-        axis.set_title(f'Wykres strat (ang. loss) procesu uczenia modelu dla wszystkich klientów.')
+                                        label=f'Model klienta o id "{client_id}"'))
+        axis.set_title(f'Wykres strat (ang. loss) procesu uczenia modelu dla \nwszystkich klientów.')
         axis.set_xlabel('Iteracje')
-        axis.set_ylabel('Straty modelu')
+        axis.set_ylabel('Wartosc funkcji strat')
         axis.grid(True)
         axis.legend(handles=[line[0] for line in loss_lines], loc='upper right')
 
         return figure_
 
 
-class ServerTestingPlotter(Plotter):
+class TraditionalParticipantLearningPlotter(LinePlotter):
+
+    def __init__(self, metrics_collector: MetricsCollector):
+        super().__init__(metrics_collector)
+        self.target_directory = f'{generated_data_path.plots}/learning_plots'
+
+    def create_plots(self):
+        metrics = self.metrics_collector.traditional_participant_training_metrics
+
+        client_accuracy_plot_name = f'{metrics.full_name}_accuracy_plot'
+        client_loss_plot_name = f'client_{metrics.full_name}_loss_plot'
+        self.plots[client_accuracy_plot_name] = self._create_accuracy_plot(metrics)
+        self.plots[client_loss_plot_name] = self._create_loss_plot(metrics)
+
+    def _create_accuracy_plot(self, metrics: TraditionalParticipantTrainingMetrics) -> Figure:
+        figure_, axis = self._create_figure()
+        accuracy_line = axis.plot(metrics.iterations, metrics.accuracy, label='Funkcja dokładności uczenia')
+        val_accuracy_line = axis.plot(metrics.iterations, metrics.val_accuracy, label='Funkcja dokładności walidacji')
+        axis.set_title(f'Wykres dokładności (ang. accuracy) procesu uczenia')
+        axis.set_xlabel('Iteracje')
+        axis.set_ylabel('Dokładność modelu')
+        axis.grid(True)
+        axis.legend(handles=[*accuracy_line, *val_accuracy_line], loc='upper left')
+
+        return figure_
+
+    def _create_loss_plot(self, metrics: TraditionalParticipantTrainingMetrics) -> Figure:
+        figure_, axis = self._create_figure()
+        loss_line = axis.plot(metrics.iterations, metrics.loss, label='Funkcja strat uczenia')
+        val_loss_line = axis.plot(metrics.iterations, metrics.val_loss, label='Funkcja strat walidacji')
+        axis.set_title(f'Wykres strat (ang. loss) procesu uczenia')
+        axis.set_xlabel('Iteracje')
+        axis.set_ylabel('Wartosc funkcji strat')
+        axis.grid(True)
+        axis.legend(handles=[*loss_line, *val_loss_line], loc='upper right')
+
+        return figure_
+
+
+class ServerTestingPlotter(LinePlotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
         super(ServerTestingPlotter, self).__init__(metrics_collector)
@@ -129,7 +185,7 @@ class ServerTestingPlotter(Plotter):
         axis.set_xlabel('Iteracje')
         axis.set_ylabel('Wartość')
         axis.grid(True)
-        axis.legend(handles=[*accuracy_line, *loss_line], loc='upper right')
+        axis.legend(handles=[*accuracy_line, *loss_line], loc='upper left')
         self.plots['server_accuracy_and_loss'] = figure_
 
 
@@ -138,6 +194,9 @@ class ConfusionMatrixMaker(Plotter):
     def __init__(self, metrics_collector: MetricsCollector):
         super(ConfusionMatrixMaker, self).__init__(metrics_collector)
         self.target_directory = f'{generated_data_path.plots}/confusion_matrixes'
+        self.font_scale = 2.2
+        self.figure_size = (6, 6)
+        self.font_size = 22
 
     def create_plots(self):
         for participant, predictions in self.metrics_collector.predictions.items():
@@ -145,18 +204,38 @@ class ConfusionMatrixMaker(Plotter):
             number_of_classes = len(classes)
 
             matrix = confusion_matrix(predictions.max_label, predictions.predicted_max_label)
-            self.figure_size = 2 * (2 * number_of_classes, )
+            self.figure_size = 2 * (2 * number_of_classes,)
             figure_, axis = self._create_figure()
 
-            heat_map = heatmap(matrix, cmap='coolwarm', linecolor='white', linewidths=1, xticklabels=classes,
-                               yticklabels=classes, annot=True, fmt='d')
-            heat_map.set_ylim(0, len(matrix))
+            box_labels = self.__get_box_labels(matrix, number_of_classes)
 
-            if participant.id == 'server':
+            heat_map = heatmap(matrix, cmap='Blues', linecolor='black', linewidths=1, xticklabels=classes,
+                               yticklabels=classes, annot=box_labels, fmt='', cbar=False,
+                               annot_kws={"size": self.font_size},)
+            heat_map.set_xticklabels(labels=heat_map.get_xticklabels(), fontsize=self.font_size)
+            heat_map.set_yticklabels(labels=heat_map.get_yticklabels(), fontsize=self.font_size)
+
+            if isinstance(participant, Server):
                 axis.set_title(f'Macierz pomyłek dla modelu globalnego')
-            else:
+            elif isinstance(participant, Client):
                 axis.set_title(f'Macierz pomyłek dla klienta o identyfikatorze "{participant.id}"')
-            axis.set_xlabel('Klasa prawdziwa')
-            axis.set_ylabel('Klasa wyznaczona przez model')
+            else:
+                axis.set_title(f'Macierz pomyłek')
+
+            axis.title.set_fontsize(self.font_size)
+            axis.set_xlabel('Klasa prawdziwa', fontsize=self.font_size)
+            axis.set_ylabel('Klasa wyznaczona przez model', fontsize=self.font_size)
 
             self.plots[participant.full_name] = figure_
+
+    @staticmethod
+    def __get_box_labels(matrix: array, number_of_classes: int) -> array:
+        matrix_flatten = matrix.flatten()
+        label_all_percentage = [f'{value:.2%}' for value in matrix_flatten / sum(matrix)]
+        label_class_percentage = [
+            f'{value / sum(matrix[i % number_of_classes, :]):.2%}' for i, value in enumerate(matrix_flatten)
+        ]
+        box_labels = [f'{number}\n{all_percentage}\n{class_percentage}' for number, all_percentage, class_percentage
+                      in zip(matrix_flatten, label_all_percentage, label_class_percentage)]
+
+        return asarray(box_labels).reshape(matrix.shape)

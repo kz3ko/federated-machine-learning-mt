@@ -97,17 +97,23 @@ class CustomDataset(ABC):
 class ClassDataset(CustomDataset):
 
     def __init__(self, samples: list[Sample]):
-        super(ClassDataset, self).__init__(samples)
+        super().__init__(samples)
         [self.class_label] = self.number_of_samples_per_class.keys()
 
 
 class ClientDataset(CustomDataset):
 
     def __init__(self, samples: list[Sample]):
-        super(ClientDataset, self).__init__(samples)
+        super().__init__(samples)
+
+
+class TrainTraditionalDataset(CustomDataset):
+
+    def __init__(self, samples: list[Sample]):
+        super().__init__(samples)
 
 
 class TestDataset(CustomDataset):
 
     def __init__(self, samples: list[Sample]):
-        super(TestDataset, self).__init__(samples)
+        super().__init__(samples)
