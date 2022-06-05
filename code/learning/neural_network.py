@@ -81,15 +81,15 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
     Trainable params: 258,762
     Non-trainable params: 0
     =================================================================
-    Epoch learning time: 16-20s
+    Epoch learning time: 14-18s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
-    Stats in best - 11 - epoch:
-        - accuracy - 0.7474
-        - loss - 0.7264
-        - val accuracy - 0.6956
-        - val loss - 0.8892
-        - test_accuracy -
-        - test_loss -
+    Stats in best - 16 - epoch:
+        - accuracy - 0.8092
+        - loss - 0.5521
+        - val accuracy - 0.6960
+        - val loss - 0.9122
+        - test_accuracy - 0.7006
+        - test_loss - 0.9133
     """
 
     def __init__(self):
@@ -145,15 +145,15 @@ class SecondNeuralNetworkModel(FirstNeuralNetworkModel):
     Trainable params: 259,210
     Non-trainable params: 448
     =================================================================
-    Epoch learning time: 28-30s
+    Epoch learning time: 27-32s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
-    Stats in best - 6 - epoch:
-        - accuracy -0.8402
-        - loss - 0.4622
-        - val accuracy - 0.6898
-        - val loss - 0.9879
-        - test_accuracy -
-        - test_loss -
+    Stats in best - 4 - epoch:
+        - accuracy - 0.7541
+        - loss - 0.7045
+        - val accuracy - 0.6701
+        - val loss - 0.9502
+        - test_accuracy - 0.6635
+        - test_loss - 0.9559
     """
 
     @staticmethod
@@ -193,15 +193,15 @@ class ThirdNeuralNetworkModel(FirstNeuralNetworkModel):
     Trainable params: 259,210
     Non-trainable params: 448
     =================================================================
-    Epoch learning time: 28-32s
+    Epoch learning time: 27-43s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
-    Stats in best - 12 - epoch:
-        - accuracy - 0.7874
-        - loss - 0.5970
-        - val accuracy - 0.7181
-        - val loss - 0.8374
-        - test_accuracy -
-        - test_loss -
+    Stats in best - 13 - epoch:
+        - accuracy - 0.8097
+        - loss - 0.5410
+        - val accuracy - 0.7399
+        - val loss - 0.7956
+        - test_accuracy - 0.7294
+        - test_loss - 0.8218
     """
 
     @staticmethod
@@ -246,13 +246,13 @@ class FourthNeuralNetworkModel(FirstNeuralNetworkModel):
     =================================================================
     Epoch learning time: 28-35s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
-    Stats in best - 16 - epoch:
-        - accuracy - 0.7716
-        - loss - 0.8083
-        - val accuracy - 0.7457
-        - val loss - 0.8949
-        - test_accuracy -
-        - test_loss -
+    Stats in best - 22 - epoch:
+        - accuracy - 0.7935
+        - loss - 0.7423
+        - val accuracy - 0.7708
+        - val loss - 0.8264
+        - test_accuracy - 0.7704
+        - test_loss - 0.8235
     """
 
     @staticmethod

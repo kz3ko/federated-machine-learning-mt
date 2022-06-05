@@ -11,7 +11,7 @@
       "main_class_ownership_per_client_ratio": 0.6
     },
     "cycle": {
-      "iterations": 5,
+      "iterations": 1000,
       "iterations_to_aggregate": 1
     },
     "client": {
@@ -22,9 +22,9 @@
     },
     "server": {
       "early_stopping": {
-        "enabled": false,
-        "metric_type": "accuracy",
-        "patience": 1
+        "enabled": true,
+        "metric_type": "loss",
+        "patience": 5
       }
     }
   },
