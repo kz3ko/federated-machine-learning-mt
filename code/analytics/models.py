@@ -50,13 +50,22 @@ class ServerMetrics(ParticipantMetrics):
 
 
 @dataclass
-class TraditionalParticipantMetrics(ParticipantMetrics):
+class TraditionalParticipantTrainingMetrics(ParticipantMetrics):
     val_accuracy: list[float] = field(default_factory=lambda: [])
     val_loss: list[float] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         super().__post_init__()
-        self.full_name = self.id
+        self.full_name = f'{self.id}_training_metrics'
+
+
+@dataclass
+class TraditionalParticipantTestMetrics(ParticipantMetrics):
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.fields_to_ignore.append('iterations')
+        self.full_name = f'{self.id}_test_metrics'
 
 
 @dataclass

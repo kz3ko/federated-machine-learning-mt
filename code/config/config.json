@@ -1,5 +1,5 @@
 {
-  "learning_type": "federated",
+  "learning_type": "traditional",
   "dataset": {
     "name": "cifar10",
     "test_data_ratio": 0.2
@@ -29,7 +29,7 @@
     }
   },
   "traditional_learning": {
-    "epochs": 1000,
+    "epochs": 3,
     "early_stopping": {
       "enabled": true,
       "metric_type": "val_loss",

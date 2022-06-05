@@ -88,6 +88,8 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         - loss - 0.7264
         - val accuracy - 0.6956
         - val loss - 0.8892
+        - test_accuracy -
+        - test_loss -
     """
 
     def __init__(self):
@@ -150,6 +152,8 @@ class SecondNeuralNetworkModel(FirstNeuralNetworkModel):
         - loss - 0.4622
         - val accuracy - 0.6898
         - val loss - 0.9879
+        - test_accuracy -
+        - test_loss -
     """
 
     @staticmethod
@@ -196,6 +200,8 @@ class ThirdNeuralNetworkModel(FirstNeuralNetworkModel):
         - loss - 0.5970
         - val accuracy - 0.7181
         - val loss - 0.8374
+        - test_accuracy -
+        - test_loss -
     """
 
     @staticmethod
@@ -240,11 +246,13 @@ class FourthNeuralNetworkModel(FirstNeuralNetworkModel):
     =================================================================
     Epoch learning time: 28-35s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
-    Stats in best - 14 - epoch:
-        - accuracy - 0.7606
-        - loss - 0.8699
-        - val accuracy - 0.7506
-        - val loss - 0.9205
+    Stats in best - 16 - epoch:
+        - accuracy - 0.7716
+        - loss - 0.8083
+        - val accuracy - 0.7457
+        - val loss - 0.8949
+        - test_accuracy -
+        - test_loss -
     """
 
     @staticmethod

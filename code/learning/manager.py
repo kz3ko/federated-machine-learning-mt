@@ -71,4 +71,5 @@ class TraditionalLearningManager(LearningManager):
 
     def run_learning_cycle(self):
         self.participant.train_model()
+        self.participant.test_model(self.test_dataset)
         self.analytics_manager.save_traditional_learning_metrics(self.participant)

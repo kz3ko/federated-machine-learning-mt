@@ -35,6 +35,7 @@ class LearningParticipant(ABC):
 
     latest_learning_history: History
     latest_predictions: PredictionMetrics
+    latest_test_metrics: SingleTestMetrics
     dataset_used_for_predictions: CustomDataset
 
     def __init__(self, id_: Union[str, int], dataset: CustomDataset, model: NeuralNetworkModel):
@@ -50,7 +51,9 @@ class LearningParticipant(ABC):
         return self.latest_learning_history
 
     def test_model(self, dataset: CustomDataset) -> SingleTestMetrics:
-        return self.model.test(dataset)
+        self.latest_test_metrics = self.model.test(dataset)
+        
+        return self.latest_test_metrics
 
     def make_predictions(self, dataset: CustomDataset) -> PredictionMetrics:
         self.dataset_used_for_predictions = dataset

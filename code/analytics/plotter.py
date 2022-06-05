@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 
-from matplotlib.pyplot import figure, Figure, Axes, rcParams, rcParamsDefault
+from matplotlib.pyplot import figure, Figure, Axes
+from matplotlib.ticker import MaxNLocator
 from sklearn.metrics import confusion_matrix
-from seaborn import heatmap, set
+from seaborn import heatmap
 from numpy import asarray, sum, array
 
 from analytics.metrics_collector import MetricsCollector
-from analytics.models import ClientMetrics, TraditionalParticipantMetrics
+from analytics.models import ClientMetrics, TraditionalParticipantTrainingMetrics
 from generated_data.path import generated_data_path
 from learning.participant import Client, Server
 from utilities.utils import create_directory
@@ -18,7 +19,6 @@ class Plotter(ABC):
         self.metrics_collector = metrics_collector
         self.plots = {}
         self.figure_size = (6, 5)
-        # self.font_scale = 1.0
         self.file_extension = 'jpg'
         self.target_directory = None
 
@@ -41,7 +41,21 @@ class Plotter(ABC):
         pass
 
 
-class ClientLearningPlotter(Plotter):
+class LinePlotter(Plotter, ABC):
+
+    def _create_figure(self) -> tuple[Figure, Axes]:
+        figure_, axis = super()._create_figure()
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        return figure_, axis
+
+
+    @abstractmethod
+    def create_plots(self):
+        pass
+
+
+class ClientLearningPlotter(LinePlotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
         super().__init__(metrics_collector)
@@ -116,21 +130,21 @@ class ClientLearningPlotter(Plotter):
         return figure_
 
 
-class TraditionalParticipantLearningPlotter(Plotter):
+class TraditionalParticipantLearningPlotter(LinePlotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
         super().__init__(metrics_collector)
         self.target_directory = f'{generated_data_path.plots}/learning_plots'
 
     def create_plots(self):
-        metrics = self.metrics_collector.traditional_participant_metrics
+        metrics = self.metrics_collector.traditional_participant_training_metrics
 
         client_accuracy_plot_name = f'{metrics.full_name}_accuracy_plot'
         client_loss_plot_name = f'client_{metrics.full_name}_loss_plot'
         self.plots[client_accuracy_plot_name] = self._create_accuracy_plot(metrics)
         self.plots[client_loss_plot_name] = self._create_loss_plot(metrics)
 
-    def _create_accuracy_plot(self, metrics: TraditionalParticipantMetrics) -> Figure:
+    def _create_accuracy_plot(self, metrics: TraditionalParticipantTrainingMetrics) -> Figure:
         figure_, axis = self._create_figure()
         accuracy_line = axis.plot(metrics.iterations, metrics.accuracy, label='Funkcja dokładności uczenia')
         val_accuracy_line = axis.plot(metrics.iterations, metrics.val_accuracy, label='Funkcja dokładności walidacji')
@@ -142,7 +156,7 @@ class TraditionalParticipantLearningPlotter(Plotter):
 
         return figure_
 
-    def _create_loss_plot(self, metrics: TraditionalParticipantMetrics) -> Figure:
+    def _create_loss_plot(self, metrics: TraditionalParticipantTrainingMetrics) -> Figure:
         figure_, axis = self._create_figure()
         loss_line = axis.plot(metrics.iterations, metrics.loss, label='Funkcja strat uczenia')
         val_loss_line = axis.plot(metrics.iterations, metrics.val_loss, label='Funkcja strat walidacji')
@@ -155,7 +169,7 @@ class TraditionalParticipantLearningPlotter(Plotter):
         return figure_
 
 
-class ServerTestingPlotter(Plotter):
+class ServerTestingPlotter(LinePlotter):
 
     def __init__(self, metrics_collector: MetricsCollector):
         super(ServerTestingPlotter, self).__init__(metrics_collector)
