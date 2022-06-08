@@ -1,43 +1,40 @@
-
-    {
-      "learning_type": "federated",
-      "dataset": {
-        "name": "cifar10",
-        "test_data_ratio": 0.2
-      },
-      "federated_learning": {
-        "data_distribution": {
-          "clients_number": 5,
-          "main_classes_per_client_number": 2,
-          "main_class_ownership_per_client_ratio": 0.6
-        },
-        "cycle": {
-          "iterations": 1000,
-          "iterations_to_aggregate": 1
-        },
-        "client": {
-          "weights_sending": {
-            "send_only_changed_weights": false,
-            "minimum_weight_difference_to_send": 1
-          }
-        },
-        "server": {
-          "early_stopping": {
-            "enabled": true,
-            "metric_type": "loss",
-            "patience": 5
-          }
-        }
-      },
-      "traditional_learning": {
-        "epochs": 1000,
-        "early_stopping": {
-          "enabled": true,
-          "metric_type": "val_loss",
-          "patience": 5,
-          "restore_best_weights": true
-        }
+{
+  "learning_type": "federated",
+  "dataset": {
+    "name": "cifar10",
+    "test_data_ratio": 0.2
+  },
+  "federated_learning": {
+    "data_distribution": {
+      "clients_number": 5,
+      "main_classes_per_client_number": 2,
+      "main_class_ownership_per_client_ratio": 0.6
+    },
+    "cycle": {
+      "iterations": 1000,
+      "iterations_to_aggregate": 1
+    },
+    "client": {
+      "weights_sending": {
+        "send_only_changed_weights": false,
+        "minimum_weight_difference_to_send": 1
+      }
+    },
+    "server": {
+      "early_stopping": {
+        "enabled": true,
+        "metric_type": "loss",
+        "patience": 5
       }
     }
-
-
+  },
+  "traditional_learning": {
+    "epochs": 1000,
+    "early_stopping": {
+      "enabled": true,
+      "metric_type": "val_loss",
+      "patience": 5,
+      "restore_best_weights": true
+    }
+  }
+}
