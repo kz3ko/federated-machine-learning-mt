@@ -1,0 +1,2 @@
+max_accuracy,max_accuracy_iteration,min_loss,min_loss_iteration,max_val_accuracy,max_val_accuracy_iteration,min_val_loss,min_val_loss_iteration
+0.7981599569320679,50,0.5937438011169434,50,0.7538200616836548,45,0.7897813320159912,45

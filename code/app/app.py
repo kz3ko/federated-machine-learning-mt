@@ -11,7 +11,7 @@ from analytics.manager import AnalyticsManager
 class App:
 
     def __init__(self):
-        self.model_class = FourthNeuralNetworkModel
+        self.model_class = ThirdNeuralNetworkModel
 
         self.config_manager = ConfigManager(self.model_class)
         self.config = self.config_manager.config

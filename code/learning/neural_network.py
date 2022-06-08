@@ -81,6 +81,7 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
     Trainable params: 258,762
     Non-trainable params: 0
     =================================================================
+    Traditional learning
     Epoch learning time: 14-18s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
     Stats in best - 16 - epoch:
@@ -90,6 +91,10 @@ class FirstNeuralNetworkModel(NeuralNetworkModel):
         - val loss - 0.9122
         - test_accuracy - 0.7006
         - test_loss - 0.9133
+    =================================================================
+    Federated learning
+    Stats in last - 50 - epoch:
+    Client epoch learning time: 3s
     """
 
     def __init__(self):
@@ -145,6 +150,7 @@ class SecondNeuralNetworkModel(FirstNeuralNetworkModel):
     Trainable params: 259,210
     Non-trainable params: 448
     =================================================================
+    Traditional learning
     Epoch learning time: 27-32s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
     Stats in best - 4 - epoch:
@@ -154,6 +160,11 @@ class SecondNeuralNetworkModel(FirstNeuralNetworkModel):
         - val loss - 0.9502
         - test_accuracy - 0.6635
         - test_loss - 0.9559
+    =================================================================
+    Federated learning
+    Stats in last - 6 - epoch:
+    Client epoch learning time: 5
+    Bach normalization breaks results a lot!
     """
 
     @staticmethod
@@ -193,6 +204,7 @@ class ThirdNeuralNetworkModel(FirstNeuralNetworkModel):
     Trainable params: 259,210
     Non-trainable params: 448
     =================================================================
+    Traditional learning
     Epoch learning time: 27-43s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
     Stats in best - 13 - epoch:
@@ -202,6 +214,10 @@ class ThirdNeuralNetworkModel(FirstNeuralNetworkModel):
         - val loss - 0.7956
         - test_accuracy - 0.7294
         - test_loss - 0.8218
+    =================================================================
+    Federated learning
+    Stats in last - 90 - epoch:
+    Client epoch learning time: 3-4s
     """
 
     @staticmethod
@@ -209,17 +225,17 @@ class ThirdNeuralNetworkModel(FirstNeuralNetworkModel):
         model = Sequential()
 
         model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.3))
 
         model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.2))
 
         model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.1))
 
@@ -244,6 +260,7 @@ class FourthNeuralNetworkModel(FirstNeuralNetworkModel):
     Trainable params: 259,210
     Non-trainable params: 448
     =================================================================
+    Traditional learning
     Epoch learning time: 28-35s
     Epochs until "EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)" stops training:
     Stats in best - 22 - epoch:
@@ -253,6 +270,10 @@ class FourthNeuralNetworkModel(FirstNeuralNetworkModel):
         - val loss - 0.8264
         - test_accuracy - 0.7704
         - test_loss - 0.8235
+    =================================================================
+    Federated learning
+    Stats in last -  - epoch:
+    Client epoch learning time:
     """
 
     @staticmethod
@@ -260,17 +281,17 @@ class FourthNeuralNetworkModel(FirstNeuralNetworkModel):
         model = Sequential()
 
         model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.3))
 
         model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.2))
 
         model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.1))
 
